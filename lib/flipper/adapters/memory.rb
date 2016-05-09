@@ -102,6 +102,8 @@ module Flipper
         "#<#{self.class.name}:#{object_id} #{attributes.join(', ')}>"
       end
 
+      private
+
       # Private
       def key(feature, gate)
         "#{feature.key}/#{gate.key}"
