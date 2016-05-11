@@ -1,7 +1,8 @@
 module Flipper
   class Gate
-    # Public
+    # Public: If this is overriden, be sure to call super so activation happens.
     def initialize(options = {})
+      activate
     end
 
     # Public: The name of the gate. Implemented in subclass.
@@ -36,6 +37,22 @@ module Flipper
       false
     end
 
+    def activated?
+      @activated
+    end
+
+    def deactivated?
+      !activated?
+    end
+
+    def activate
+      @activated = true
+    end
+
+    def deactivate
+      @activated = false
+    end
+
     # Internal: Allows gate to wrap thing using one of the supported flipper
     # types so adapters always get something that responds to value.
     def wrap(thing)
@@ -48,6 +65,7 @@ module Flipper
         "name=#{name.inspect}",
         "key=#{key.inspect}",
         "data_type=#{data_type.inspect}",
+        "activated=#{@activated.inspect}",
       ]
       "#<#{self.class.name}:#{object_id} #{attributes.join(', ')}>"
     end

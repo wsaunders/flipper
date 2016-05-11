@@ -341,6 +341,44 @@ module Flipper
         raise(GateNotFound.new(thing))
     end
 
+    # Internal: Get all activated gates. This may become public, but for now is
+    # an experiment so caveat emptor.
+    #
+    # Returns an array of gates.
+    def activated_gates
+      gates.select(&:activated?)
+    end
+
+    # Internal: Get all deactivated gates. This may become public, but for now
+    # is an experiment so caveat emptor.
+    #
+    # Returns an array of gates.
+    def deactivated_gates
+      gates.select(&:deactivated?)
+    end
+
+    # Internal: Activate a gate by name. This may become public, but for now is
+    # an experiment so caveat emptor.
+    #
+    # name - The Symbol name of the gate.
+    #
+    # Returns nothing.
+    def activate(name)
+      gate(name).activate
+      nil
+    end
+
+    # Internal: Deactivate a gate by name. This may become public, but for now
+    # is an experiment so caveat emptor.
+    #
+    # name - The Symbol name of the gate.
+    #
+    # Returns nothing.
+    def deactivate(name)
+      gate(name).deactivate
+      nil
+    end
+
     private
 
     # Private: Instrument a feature operation.

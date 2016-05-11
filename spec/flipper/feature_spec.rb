@@ -741,4 +741,78 @@ RSpec.describe Flipper::Feature do
             ])
     end
   end
+
+  describe "#activate" do
+    before do
+      subject.gate(:actor).deactivate
+    end
+
+    it "activates gate" do
+      expect(subject.activated_gates.map(&:name)).to_not include(:actor)
+      subject.activate(:actor)
+      expect(subject.activated_gates.map(&:name)).to include(:actor)
+    end
+
+    it "activates gate with string name" do
+      expect(subject.activated_gates.map(&:name)).to_not include(:actor)
+      subject.activate("actor")
+      expect(subject.activated_gates.map(&:name)).to include(:actor)
+    end
+  end
+
+  describe "#deactivate" do
+    before do
+      subject.gate(:actor).activate
+    end
+
+    it "deactivates gate" do
+      expect(subject.activated_gates.map(&:name)).to include(:actor)
+      subject.deactivate(:actor)
+      expect(subject.activated_gates.map(&:name)).to_not include(:actor)
+    end
+
+    it "deactivates gate with string name" do
+      expect(subject.activated_gates.map(&:name)).to include(:actor)
+      subject.deactivate("actor")
+      expect(subject.activated_gates.map(&:name)).to_not include(:actor)
+    end
+  end
+
+  describe "#activated_gates" do
+    before do
+      subject.gate(:actor).deactivate
+      subject.gate(:group).deactivate
+      subject.gate(:percentage_of_actors).deactivate
+    end
+
+    it "includes all activated gates" do
+      expect(subject.activated_gates.map(&:name).sort).to include(:boolean)
+      expect(subject.activated_gates.map(&:name).sort).to include(:percentage_of_time)
+    end
+
+    it "does not include deactivated gates" do
+      expect(subject.activated_gates.map(&:name).sort).to_not include(:group)
+      expect(subject.activated_gates.map(&:name).sort).to_not include(:actor)
+      expect(subject.activated_gates.map(&:name).sort).to_not include(:percentage_of_actors)
+    end
+  end
+
+  describe "#deactivated_gates" do
+    before do
+      subject.gate(:actor).deactivate
+      subject.gate(:group).deactivate
+      subject.gate(:percentage_of_actors).deactivate
+    end
+
+    it "includes all deactivated gates" do
+      expect(subject.deactivated_gates.map(&:name).sort).to include(:group)
+      expect(subject.deactivated_gates.map(&:name).sort).to include(:actor)
+      expect(subject.deactivated_gates.map(&:name).sort).to include(:percentage_of_actors)
+    end
+
+    it "does not include activated gates" do
+      expect(subject.deactivated_gates.map(&:name).sort).to_not include(:boolean)
+      expect(subject.deactivated_gates.map(&:name).sort).to_not include(:percentage_of_time)
+    end
+  end
 end

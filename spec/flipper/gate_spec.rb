@@ -38,4 +38,37 @@ RSpec.describe Flipper::Gate do
       end
     end
   end
+
+  describe "activation" do
+    let(:subclass) {
+      Class.new(described_class) {
+        def name
+          :name
+        end
+
+        def key
+          :key
+        end
+
+        def data_type
+          :set
+        end
+      }
+    }
+
+    it "is activated by default" do
+      instance = subclass.new
+      expect(instance.activated?).to be(true)
+    end
+
+    it "can be deactivated and reactivated" do
+      instance = subclass.new
+      instance.deactivate
+      expect(instance.activated?).to be(false)
+      expect(instance.deactivated?).to be(true)
+      instance.activate
+      expect(instance.activated?).to be(true)
+      expect(instance.deactivated?).to be(false)
+    end
+  end
 end
