@@ -32,6 +32,12 @@ Flipper::Instrumentation::LogSubscriber.logger = $logger
 adapter = Flipper::Adapters::PStore.new
 flipper = Flipper.new(adapter, instrumenter: ActiveSupport::Notifications)
 
+# flipper[:test].deactivate(:boolean)
+# flipper[:test].deactivate(:actor)
+# flipper[:test].deactivate(:percentage_of_actors)
+# flipper[:test].deactivate(:percentage_of_time)
+# flipper[:test].deactivate(:group)
+
 # You can uncomment these to get some default data:
 # flipper[:search_performance_another_long_thing].enable
 # flipper[:gauges_tracking].enable
