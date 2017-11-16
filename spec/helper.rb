@@ -10,7 +10,9 @@ require 'bundler'
 Bundler.setup(:default)
 
 require 'simplecov'
-SimpleCov.start
+SimpleCov.start do
+  add_filter "/spec/"
+end
 
 require 'pry'
 require 'webmock/rspec'
