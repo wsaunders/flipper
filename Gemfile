@@ -15,6 +15,7 @@ gem 'rspec', '~> 3.0'
 gem 'rubocop-rspec', '= 1.5.1'
 gem 'rubocop', '~> 0.45.0'
 gem 'shotgun', '~> 0.9'
+gem 'simplecov', '~> 0.15.1', require: false
 gem 'sqlite3', '~> 1.3.11'
 gem 'statsd-ruby', '~> 1.2.1'
 gem 'webmock', '~> 2.0'
