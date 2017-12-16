@@ -13,7 +13,7 @@ module Flipper
     def self.new(token, options = {})
       configuration = Configuration.new(options.merge(token: token))
       yield configuration if block_given?
-      instrumenter = Instrumenter.new(configuration.instrumenter)
+      instrumenter = Instrumenter.new(configuration)
       Flipper.new(configuration.adapter, instrumenter: instrumenter)
     end
   end

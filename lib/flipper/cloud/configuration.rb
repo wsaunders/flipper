@@ -66,6 +66,10 @@ module Flipper
         end
       end
 
+      def client
+        adapter.client
+      end
+
       # Public: Set url and uri for the http adapter.
       attr_writer :url
 

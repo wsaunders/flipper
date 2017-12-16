@@ -1,12 +1,19 @@
 require 'helper'
 require 'flipper/instrumenters/memory'
 require 'flipper/cloud/instrumenter'
+require 'flipper/cloud/configuration'
 
 RSpec.describe Flipper::Cloud::Instrumenter do
-  describe '#instrument with block' do
-    let(:instrumenter) { Flipper::Instrumenters::Memory.new }
-    subject { described_class.new(instrumenter) }
+  let(:instrumenter) { Flipper::Instrumenters::Memory.new }
+  let(:configuration) {
+    Flipper::Cloud::Configuration.new({
+      token: "asdf",
+      instrumenter: instrumenter,
+    })
+  }
+  subject { described_class.new(configuration) }
 
+  describe '#instrument with block' do
     before do
       @yielded = 0
       @result = subject.instrument(:foo, bar: "baz") do
@@ -32,9 +39,6 @@ RSpec.describe Flipper::Cloud::Instrumenter do
   end
 
   describe '#instrument without block' do
-    let(:instrumenter) { Flipper::Instrumenters::Memory.new }
-    subject { described_class.new(instrumenter) }
-
     before do
       @result = subject.instrument(:foo, bar: "baz")
     end
