@@ -60,38 +60,5 @@ RSpec.describe Flipper::Cloud::Instrumenter do
         expect(configuration.event_queue.size).to be(1)
       end
     end
-
-    context 'when under capacity' do
-      it 'adds event to queue' do
-        subject.instrument(:foo)
-        expect(configuration.event_queue.size).to be(1)
-      end
-    end
-
-    context 'when at capacity' do
-      before do
-        configuration.event_capacity.times do
-          subject.instrument(:foo)
-        end
-      end
-
-      it 'does not add event to queue' do
-        subject.instrument(:foo)
-        expect(configuration.event_queue.size).to be(configuration.event_capacity)
-      end
-    end
-
-    context 'when over capacity' do
-      before do
-        (configuration.event_capacity + 1).times do
-          subject.instrument(:foo)
-        end
-      end
-
-      it 'does not add event to queue' do
-        subject.instrument(:foo)
-        expect(configuration.event_queue.size).to be(configuration.event_capacity)
-      end
-    end
   end
 end
