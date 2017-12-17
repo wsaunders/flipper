@@ -1,9 +1,15 @@
-require "flipper/adapters/http"
-require "flipper/instrumenters/noop"
+require 'forwardable'
+require 'thread'
+require 'flipper/adapters/http'
+require 'flipper/instrumenters/noop'
 
 module Flipper
   module Cloud
     class Configuration
+      extend Forwardable
+
+      def_delegators :adapter, :client
+
       # The default url should be the one, the only, the website.
       DEFAULT_URL = "https://www.featureflipper.com/adapter".freeze
 
@@ -36,11 +42,18 @@ module Flipper
       #  configuration.instrumenter = ActiveSupport::Notifications
       attr_accessor :instrumenter
 
+      attr_accessor :event_queue
+      attr_accessor :event_capacity
+      attr_accessor :event_flush_interval
+
       def initialize(options = {})
         @token = options.fetch(:token)
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
         @read_timeout = options.fetch(:read_timeout, 5)
         @open_timeout = options.fetch(:open_timeout, 5)
+        @event_capacity = options.fetch(:event_capacity, 10_000)
+        @event_queue = options.fetch(:event_queue, Queue.new)
+        @event_flush_interval = options.fetch(:event_flush_interval, 10_000)
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }
 
@@ -64,10 +77,6 @@ module Flipper
         else
           @adapter_block.call(http_adapter)
         end
-      end
-
-      def client
-        adapter.client
       end
 
       # Public: Set url and uri for the http adapter.
