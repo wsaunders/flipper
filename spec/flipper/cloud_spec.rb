@@ -72,19 +72,19 @@ RSpec.describe Flipper::Cloud do
 
   it 'can set debug_output' do
     expect(Flipper::Adapters::Http::Client).to receive(:new)
-      .with(hash_including(debug_output: STDOUT))
+      .with(hash_including(debug_output: STDOUT)).at_least(1)
     described_class.new('asdf', debug_output: STDOUT)
   end
 
   it 'can set read_timeout' do
     expect(Flipper::Adapters::Http::Client).to receive(:new)
-      .with(hash_including(read_timeout: 1))
+      .with(hash_including(read_timeout: 1)).at_least(1)
     described_class.new('asdf', read_timeout: 1)
   end
 
   it 'can set open_timeout' do
     expect(Flipper::Adapters::Http::Client).to receive(:new)
-      .with(hash_including(open_timeout: 1))
+      .with(hash_including(open_timeout: 1)).at_least(1)
     described_class.new('asdf', open_timeout: 1)
   end
 end
