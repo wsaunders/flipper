@@ -9,7 +9,7 @@ module Flipper
           route(/features\Z/)
 
           def get
-            keys = params['keys']
+            keys = json_param('keys')
             features = if keys
                          names = keys.split(',')
                          if names.empty?
@@ -33,7 +33,7 @@ module Flipper
           end
 
           def post
-            feature_name = params.fetch('name') { json_error_response(:name_invalid) }
+            feature_name = json_param('name') { json_error_response(:name_invalid) }
             feature = flipper[feature_name]
             feature.add
             decorated_feature = Decorators::Feature.new(feature)

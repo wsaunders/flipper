@@ -35,7 +35,7 @@ module Flipper
 
           def percentage
             @percentage ||= begin
-              Integer(params['percentage'])
+              Integer(json_param('percentage'))
             rescue ArgumentError, TypeError
               -1
             end

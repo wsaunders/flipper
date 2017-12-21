@@ -8,6 +8,9 @@ module Flipper
     class Action
       extend Forwardable
 
+      CONTENT_TYPE_KEY = 'CONTENT_TYPE'.freeze
+      REQUEST_BODY_KEY = 'rack.input'.freeze
+
       VALID_REQUEST_METHOD_NAMES = Set.new([
                                              'get'.freeze,
                                              'post'.freeze,
@@ -48,6 +51,7 @@ module Flipper
 
       # Public: The params for the request.
       def_delegator :@request, :params
+      def_delegator :@request, :env
 
       def initialize(flipper, request)
         @flipper = flipper
@@ -129,7 +133,33 @@ module Flipper
         @headers[name] = value
       end
 
+      def json_param(key, &block)
+        json_params.fetch(key.to_s) {
+          params.fetch(key) {
+            yield if block_given?
+          }
+        }
+      end
+
       private
+
+      def json_params
+        @json_params ||= if env[CONTENT_TYPE_KEY] == Api::CONTENT_TYPE
+          body = env[REQUEST_BODY_KEY].read
+          env[REQUEST_BODY_KEY].rewind
+          if body.nil? || body.empty?
+            {}
+          else
+            begin
+              JSON.parse(body)
+            rescue => boom
+              {}
+            end
+          end
+        else
+          {}
+        end
+      end
 
       # Private: Returns the request method converted to an action method.
       def request_method_name
