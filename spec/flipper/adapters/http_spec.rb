@@ -4,8 +4,6 @@ require 'flipper/adapters/pstore'
 require 'flipper/spec/shared_adapter_specs'
 require 'rack/handler/webrick'
 
-FLIPPER_SPEC_API_PORT = ENV.fetch('FLIPPER_SPEC_API_PORT', 9001).to_i
-
 RSpec.describe Flipper::Adapters::Http do
   context 'adapter' do
     subject do

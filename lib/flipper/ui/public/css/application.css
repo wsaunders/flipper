@@ -1959,7 +1959,7 @@ th {
   .table > tfoot > tr > th,
   .table > tfoot > tr > td {
     padding: 8px;
-    line-height: 1.42857;
+    line-height: 1.428571429;
     vertical-align: top;
     border-top: 1px solid #ddd; }
   .table > thead > tr > th {

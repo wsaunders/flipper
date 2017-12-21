@@ -1,6 +1,8 @@
 require 'helper'
 require 'flipper/cloud'
 require 'flipper/adapters/instrumented'
+require 'flipper/adapters/pstore'
+require 'rack/handler/webrick'
 
 RSpec.describe Flipper::Cloud do
   context "initialize with token" do
@@ -86,5 +88,59 @@ RSpec.describe Flipper::Cloud do
     expect(Flipper::Adapters::Http::Client).to receive(:new)
       .with(hash_including(open_timeout: 1)).at_least(1)
     described_class.new('asdf', open_timeout: 1)
+  end
+
+  context 'integration' do
+    subject do
+      described_class.new("asdf") do |config|
+        config.url = "http://localhost:#{FLIPPER_SPEC_API_PORT}"
+        config.event_flush_interval = 0.1
+      end
+    end
+
+    let(:instrumenter) { subject.instrumenter }
+
+    before :all do
+      dir = FlipperRoot.join('tmp').tap(&:mkpath)
+      log_path = dir.join('flipper_adapters_http_spec.log')
+      @pstore_file = dir.join('flipper.pstore')
+      @pstore_file.unlink if @pstore_file.exist?
+
+      api_adapter = Flipper::Adapters::PStore.new(@pstore_file)
+      flipper_api = Flipper.new(api_adapter)
+      app = Flipper::Api.app(flipper_api)
+      server_options = {
+        Port: FLIPPER_SPEC_API_PORT,
+        StartCallback: -> { @started = true },
+        Logger: WEBrick::Log.new(log_path.to_s, WEBrick::Log::INFO),
+        AccessLog: [
+          [log_path.open('w'), WEBrick::AccessLog::COMBINED_LOG_FORMAT],
+        ],
+      }
+      @server = WEBrick::HTTPServer.new(server_options)
+      @server.mount '/', Rack::Handler::WEBrick, app
+
+      Thread.new { @server.start }
+      Timeout.timeout(1) { :wait until @started }
+    end
+
+    after :all do
+      @server.shutdown if @server
+    end
+
+    before(:each) do
+      @pstore_file.unlink if @pstore_file.exist?
+    end
+
+    it 'works' do
+      subject.enabled?(:foo)
+      subject.enabled?(:foo)
+      subject.enabled?(:foo)
+      instrumenter.shutdown
+      # loop do
+      #   break if instrumenter.event_queue.empty?
+      #   p instrumenter.event_queue.pop(true)
+      # end
+    end
   end
 end

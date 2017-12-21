@@ -28,12 +28,13 @@ module Flipper
             @dimensions[FEATURE_KEY] = feature.to_s
 
             if operation == :enabled?
-              thing = payload[:thing]
-              if thing && thing.is_a?(Flipper::Types::Actor)
+              if thing = payload[:thing]
                 @dimensions[FLIPPER_ID_KEY] = thing.value
               end
 
-              @dimensions[RESULT_KEY] = payload[:result].to_s
+              if payload.key?(:result)
+                @dimensions[RESULT_KEY] = payload[:result].to_s
+              end
             end
           end
         end
