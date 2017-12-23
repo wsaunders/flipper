@@ -5,13 +5,11 @@ require 'flipper/cloud/configuration'
 
 RSpec.describe Flipper::Cloud::Instrumenter do
   let(:instrumenter) { Flipper::Instrumenters::Memory.new }
-  let(:configuration) {
-    Flipper::Cloud::Configuration.new({
-      token: "asdf",
-      instrumenter: instrumenter,
-      event_queue: Queue.new,
-    })
-  }
+  let(:configuration) do
+    Flipper::Cloud::Configuration.new(token: "asdf",
+                                      instrumenter: instrumenter,
+                                      event_queue: Queue.new)
+  end
   subject { described_class.new(configuration) }
 
   describe '#instrument with block' do

@@ -33,8 +33,8 @@ module Flipper
       # request - The Rack::Request that was sent.
       #
       # Returns result of Action#run.
-      def self.run(flipper, request)
-        new(flipper, request).run
+      def self.run(flipper, request, event_receiver)
+        new(flipper, request, event_receiver).run
       end
 
       # Internal: The regex that matches which routes this action will work for.
@@ -49,13 +49,18 @@ module Flipper
       # Public: The Rack::Request to provide a response for.
       attr_reader :request
 
+      # Public: The event receiver that can apply logic when batches of
+      # instrumented events are received.
+      attr_reader :event_receiver
+
       # Public: The params for the request.
       def_delegator :@request, :params
       def_delegator :@request, :env
 
-      def initialize(flipper, request)
+      def initialize(flipper, request, event_receiver)
         @flipper = flipper
         @request = request
+        @event_receiver = event_receiver
         @code = 200
         @headers = { 'Content-Type' => Api::CONTENT_TYPE }
       end
@@ -104,7 +109,7 @@ module Flipper
       def json_response(object, status = 200)
         header 'Content-Type', Api::CONTENT_TYPE
         status(status)
-        body = JSON.dump(object)
+        body = JSON.generate(object)
         halt [@code, @headers, [body]]
       end
 
@@ -133,32 +138,32 @@ module Flipper
         @headers[name] = value
       end
 
-      def json_param(key, &block)
-        json_params.fetch(key.to_s) {
-          params.fetch(key) {
+      def json_param(key)
+        json_params.fetch(key.to_s) do
+          params.fetch(key) do
             yield if block_given?
-          }
-        }
+          end
+        end
       end
 
       private
 
       def json_params
         @json_params ||= if env[CONTENT_TYPE_KEY] == Api::CONTENT_TYPE
-          body = env[REQUEST_BODY_KEY].read
-          env[REQUEST_BODY_KEY].rewind
-          if body.nil? || body.empty?
-            {}
-          else
-            begin
-              JSON.parse(body)
-            rescue => boom
-              {}
-            end
-          end
-        else
-          {}
-        end
+                           body = env[REQUEST_BODY_KEY].read
+                           env[REQUEST_BODY_KEY].rewind
+                           if body.nil? || body.empty?
+                             {}
+                           else
+                             begin
+                               JSON.parse(body)
+                             rescue
+                               {}
+                             end
+                           end
+                         else
+                           {}
+                         end
       end
 
       # Private: Returns the request method converted to an action method.

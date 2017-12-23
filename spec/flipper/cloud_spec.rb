@@ -1,5 +1,6 @@
 require 'helper'
 require 'flipper/cloud'
+require 'flipper/event_receivers/memory'
 require 'flipper/adapters/instrumented'
 require 'flipper/adapters/pstore'
 require 'rack/handler/webrick'
@@ -100,7 +101,8 @@ RSpec.describe Flipper::Cloud do
 
     let(:instrumenter) { subject.instrumenter }
 
-    before :all do
+    before(:all) do
+      @event_receiver = Flipper::EventReceivers::Memory.new
       dir = FlipperRoot.join('tmp').tap(&:mkpath)
       log_path = dir.join('flipper_adapters_http_spec.log')
       @pstore_file = dir.join('flipper.pstore')
@@ -108,7 +110,7 @@ RSpec.describe Flipper::Cloud do
 
       api_adapter = Flipper::Adapters::PStore.new(@pstore_file)
       flipper_api = Flipper.new(api_adapter)
-      app = Flipper::Api.app(flipper_api)
+      app = Flipper::Api.app(flipper_api, event_receiver: @event_receiver)
       server_options = {
         Port: FLIPPER_SPEC_API_PORT,
         StartCallback: -> { @started = true },
@@ -124,7 +126,7 @@ RSpec.describe Flipper::Cloud do
       Timeout.timeout(1) { :wait until @started }
     end
 
-    after :all do
+    after(:all) do
       @server.shutdown if @server
     end
 
@@ -132,15 +134,18 @@ RSpec.describe Flipper::Cloud do
       @pstore_file.unlink if @pstore_file.exist?
     end
 
-    it 'works' do
-      subject.enabled?(:foo)
-      subject.enabled?(:foo)
-      subject.enabled?(:foo)
+    it 'sends events to event_receiver in batches' do
+      actors = Array.new(5) { |i| Flipper::Actor.new("Flipper::Actor;#{i}") }
+      subject.enabled?(:foo, actors.sample)
+      subject.enabled?(:foo, actors.sample)
+      subject.enabled?(:foo, actors.sample)
+      subject.enabled?(:foo, actors.sample)
+      subject.enabled?(:foo, actors.sample)
+      subject.enabled?(:foo, actors.sample)
       instrumenter.shutdown
-      # loop do
-      #   break if instrumenter.event_queue.empty?
-      #   p instrumenter.event_queue.pop(true)
-      # end
+
+      expect(@event_receiver.size).to be(1)
+      expect(instrumenter.event_queue.size).to be(0)
     end
   end
 end

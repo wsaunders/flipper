@@ -6,37 +6,56 @@ module Flipper
 
         # Operations with a name that we want to normalize.
         ABNORMAL_OPERATIONS = {
-          :enabled? => :enabled,
-        }
+          enabled?: :enabled,
+        }.freeze
 
         DEFAULT_OPERATION = :unknown
         FEATURE_KEY = "feature".freeze
         FLIPPER_ID_KEY = "flipper_id".freeze
         RESULT_KEY = "result".freeze
+        ENABLED_TYPE = "enabled".freeze
 
-        def initialize(name, payload)
-          @timestamp = Time.now.to_i
-          @name = name
-          @payload = payload
-          @dimensions = {}
+        def self.from_hash(hash)
+          new(
+            type: hash.fetch("type"),
+            timestamp: hash.fetch("timestamp"),
+            dimensions: hash.fetch("dimensions")
+          )
+        end
 
-          operation = payload[:operation] || DEFAULT_OPERATION
-          @type = ABNORMAL_OPERATIONS.fetch(operation, operation).to_s
+        def self.new_from_name_and_payload(attributes = {})
+          name = attributes.fetch(:name)
+          payload = attributes.fetch(:payload)
+          return unless name == Flipper::Feature::InstrumentationName
 
           feature = payload[:feature_name]
-          if feature
-            @dimensions[FEATURE_KEY] = feature.to_s
+          return unless feature
 
-            if operation == :enabled?
-              if thing = payload[:thing]
-                @dimensions[FLIPPER_ID_KEY] = thing.value
-              end
+          dimensions = {}
+          dimensions[FEATURE_KEY] = feature.to_s
 
-              if payload.key?(:result)
-                @dimensions[RESULT_KEY] = payload[:result].to_s
-              end
-            end
+          type = type_from_payload(payload)
+          return unless type == ENABLED_TYPE
+
+          thing = payload[:thing]
+          dimensions[FLIPPER_ID_KEY] = thing.value if thing
+
+          if payload.key?(:result)
+            dimensions[RESULT_KEY] = payload[:result].to_s
           end
+
+          new(type: type, dimensions: dimensions, timestamp: Instrumenter.clock_milliseconds)
+        end
+
+        def self.type_from_payload(payload)
+          operation = payload[:operation] || DEFAULT_OPERATION
+          ABNORMAL_OPERATIONS.fetch(operation, operation).to_s
+        end
+
+        def initialize(attributes = {})
+          @type = attributes.fetch(:type)
+          @dimensions = attributes.fetch(:dimensions) { {} }
+          @timestamp = attributes.fetch(:timestamp) { Instrumenter.clock_milliseconds }
         end
 
         def as_json
