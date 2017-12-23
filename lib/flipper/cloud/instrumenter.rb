@@ -42,6 +42,7 @@ module Flipper
         # TODO: Ensure the worker thread is alive and create new one if not.
         # TODO: Ensure there is capacity to add event to queue and keep track of
         # discarded items and report that to cloud in some way
+        # TODO: Stop enqueueing events if shutting down?
         event_queue << event
       end
 
@@ -57,12 +58,12 @@ module Flipper
               size = event_queue.size
               size.times { events << event_queue.pop(true) }
               shutdown, events = events.partition { |event| event == SHUTDOWN }
-
               submit_events(events)
             rescue => boom
               p boom: boom, response: response, body: response.body
               # TODO: do something with boom like log or report to cloud
             ensure
+              # TODO: flush any remaining events here?
               break if shutdown
             end
           end
@@ -73,15 +74,18 @@ module Flipper
         return if events.empty?
 
         # TODO: Bound the number of events per request.
-        body = JSON.generate(events: events.map(&:as_json),
-                             event_capacity: event_capacity,
-                             event_flush_interval: event_flush_interval,
-                             version: Flipper::VERSION,
-                             platform: "ruby",
-                             platform_version: RUBY_VERSION,
-                             hostname: Socket.gethostname,
-                             pid: Process.pid,
-                             client_timestamp: Instrumenter.clock_milliseconds)
+        attributes = {
+          events: events.map(&:as_json),
+          event_capacity: event_capacity,
+          event_flush_interval: event_flush_interval,
+          version: Flipper::VERSION,
+          platform: "ruby",
+          platform_version: RUBY_VERSION,
+          hostname: Socket.gethostname,
+          pid: Process.pid,
+          client_timestamp: Instrumenter.clock_milliseconds,
+        }
+        body = JSON.generate(attributes)
         response = client.post("/events", body)
 
         # TODO: never raise here, just report some statistic instead
