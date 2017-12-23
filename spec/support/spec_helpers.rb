@@ -1,10 +1,12 @@
 require 'json'
+require 'flipper/event_receivers/noop'
 require 'flipper/adapters/memory'
 require 'rack/test'
 
 module SpecHelpers
   def self.included(base)
     base.let(:flipper) { build_flipper }
+    base.let(:event_receiver) { build_event_receiver }
     base.let(:app) { build_app(flipper) }
   end
 
@@ -24,6 +26,10 @@ module SpecHelpers
 
   def build_memory_adapter
     Flipper::Adapters::Memory.new
+  end
+
+  def build_event_receiver
+    Flipper::EventReceivers::Noop
   end
 
   def json_response
