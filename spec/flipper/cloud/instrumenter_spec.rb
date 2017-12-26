@@ -67,13 +67,6 @@ RSpec.describe Flipper::Cloud::Instrumenter do
       end
     end
 
-    it 'ensures thread is exists and is alive' do
-      subject.instance_variable_get("@thread").kill
-      expect(subject.instance_variable_get("@thread")).to_not be_alive
-      subject.instrument(:foo)
-      expect(subject.instance_variable_get("@thread")).to be_alive
-    end
-
     it 'does not allow event_queue size to exceed event_capacity' do
       (event_capacity * 2).times { subject.instrument(:foo) }
       expect(event_queue.size).to be <= event_capacity
