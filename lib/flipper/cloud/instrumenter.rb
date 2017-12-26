@@ -15,7 +15,7 @@ module Flipper
 
       def initialize(configuration)
         @configuration = configuration
-        @thread = create_thread
+        ensure_thread_alive
       end
 
       def instrument(name, payload = {}, &block)
@@ -39,11 +39,16 @@ module Flipper
                      :event_flush_interval
 
       def add(event)
-        # TODO: Ensure the worker thread is alive and create new one if not.
+        ensure_thread_alive
         # TODO: Ensure there is capacity to add event to queue and keep track of
         # discarded items and report that to cloud in some way
         # TODO: Stop enqueueing events if shutting down?
         event_queue << event
+      end
+
+      def ensure_thread_alive
+        @thread = create_thread unless @thread && @thread.alive?
+        @thread
       end
 
       def create_thread
