@@ -53,7 +53,7 @@ module Flipper
         @open_timeout = options.fetch(:open_timeout, 5)
         @event_capacity = options.fetch(:event_capacity, 10_000)
         @event_queue = options.fetch(:event_queue, Queue.new)
-        @event_flush_interval = options.fetch(:event_flush_interval, 10_000)
+        @event_flush_interval = options.fetch(:event_flush_interval, 10)
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }
 
