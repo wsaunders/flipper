@@ -1,6 +1,7 @@
 require 'helper'
 require 'flipper/cloud'
 require 'flipper/event_receivers/memory'
+require 'flipper/instrumenters/memory'
 require 'flipper/adapters/instrumented'
 require 'flipper/adapters/pstore'
 require 'rack/handler/webrick'
@@ -58,7 +59,7 @@ RSpec.describe Flipper::Cloud do
   end
 
   it 'can set instrumenter' do
-    instrumenter = Object.new
+    instrumenter = Flipper::Instrumenters::Memory.new
     instance = described_class.new('asdf', instrumenter: instrumenter)
     expect(instance.instrumenter.instrumenter).to be(instrumenter)
   end
