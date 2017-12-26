@@ -5,10 +5,18 @@ require 'flipper/cloud/configuration'
 
 RSpec.describe Flipper::Cloud::Instrumenter do
   let(:instrumenter) { Flipper::Instrumenters::Memory.new }
+  let(:event_queue) { Queue.new }
+  let(:event_capacity) { 10 }
+  let(:event_flush_interval) { 60 }
   let(:configuration) do
-    Flipper::Cloud::Configuration.new(token: "asdf",
-                                      instrumenter: instrumenter,
-                                      event_queue: Queue.new)
+    attributes = {
+      token: "asdf",
+      instrumenter: instrumenter,
+      event_queue: event_queue,
+      event_capacity: event_capacity,
+      event_flush_interval: event_flush_interval,
+    }
+    Flipper::Cloud::Configuration.new(attributes)
   end
   subject { described_class.new(configuration) }
 
@@ -64,6 +72,11 @@ RSpec.describe Flipper::Cloud::Instrumenter do
       expect(subject.instance_variable_get("@thread")).to_not be_alive
       subject.instrument(:foo)
       expect(subject.instance_variable_get("@thread")).to be_alive
+    end
+
+    it 'does not allow event_queue size to exceed event_capacity' do
+      (event_capacity * 2).times { subject.instrument(:foo) }
+      expect(event_queue.size).to be <= event_capacity
     end
   end
 end

@@ -40,10 +40,13 @@ module Flipper
 
       def add(event)
         ensure_thread_alive
-        # TODO: Ensure there is capacity to add event to queue and keep track of
-        # discarded items and report that to cloud in some way
+
         # TODO: Stop enqueueing events if shutting down?
-        event_queue << event
+        if event_queue.size < event_capacity
+          event_queue << event
+        else
+          # TODO: Log drops? Keep statistics on drops and send them to cloud?
+        end
       end
 
       def ensure_thread_alive
