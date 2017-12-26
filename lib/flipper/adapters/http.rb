@@ -13,13 +13,18 @@ module Flipper
       attr_reader :name, :client
 
       def initialize(options = {})
-        @client = Client.new(url: options.fetch(:url),
-                             headers: options[:headers],
-                             basic_auth_username: options[:basic_auth_username],
-                             basic_auth_password: options[:basic_auth_password],
-                             read_timeout: options[:read_timeout],
-                             open_timeout: options[:open_timeout],
-                             debug_output: options[:debug_output])
+        @client = options.fetch(:client) {
+          client_options = {
+            url: options.fetch(:url),
+            headers: options[:headers],
+            basic_auth_username: options[:basic_auth_username],
+            basic_auth_password: options[:basic_auth_password],
+            read_timeout: options[:read_timeout],
+            open_timeout: options[:open_timeout],
+            debug_output: options[:debug_output],
+          }
+          Client.new(client_options)
+        }
         @name = :http
       end
 

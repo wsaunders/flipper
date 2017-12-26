@@ -1,4 +1,3 @@
-require 'forwardable'
 require 'thread'
 require 'flipper/adapters/http'
 require 'flipper/instrumenters/noop'
@@ -6,10 +5,6 @@ require 'flipper/instrumenters/noop'
 module Flipper
   module Cloud
     class Configuration
-      extend Forwardable
-
-      def_delegators :adapter, :client
-
       # The default url should be the one, the only, the website.
       DEFAULT_URL = "https://www.featureflipper.com/adapter".freeze
 
@@ -82,16 +77,23 @@ module Flipper
       # Public: Set url and uri for the http adapter.
       attr_writer :url
 
+      def client
+        client_options = {
+          url: @url,
+          read_timeout: @read_timeout,
+          open_timeout: @open_timeout,
+          debug_output: @debug_output,
+          headers: {
+            "Feature-Flipper-Token" => @token,
+          },
+        }
+        Flipper::Adapters::Http::Client.new(client_options)
+      end
+
       private
 
       def http_adapter
-        Flipper::Adapters::Http.new(url: @url,
-                                    read_timeout: @read_timeout,
-                                    open_timeout: @open_timeout,
-                                    debug_output: @debug_output,
-                                    headers: {
-                                      "Feature-Flipper-Token" => @token,
-                                    })
+        Flipper::Adapters::Http.new(client: client)
       end
     end
   end

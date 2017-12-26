@@ -54,6 +54,12 @@ RSpec.describe Flipper::Adapters::Http do
     end
   end
 
+  it 'can set the client' do
+    client = described_class::Client.new(url: "http://app.com/flipper")
+    adapter = described_class.new(client: client)
+    expect(adapter.client).to be(client)
+  end
+
   it "sends default headers" do
     headers = {
       'Accept' => 'application/json',
