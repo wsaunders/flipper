@@ -12,7 +12,7 @@ RSpec.describe Flipper::Cloud::Instrumenter do
   end
   subject { described_class.new(configuration) }
 
-  describe '#instrument with block' do
+  describe '#instrument' do
     context 'with block' do
       before do
         @yielded = 0
