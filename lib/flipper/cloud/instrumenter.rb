@@ -48,7 +48,6 @@ module Flipper
 
       def ensure_thread_alive
         @thread = create_thread unless @thread && @thread.alive?
-        @thread
       end
 
       def create_thread
