@@ -59,7 +59,7 @@ RSpec.describe Flipper::Cloud::Instrumenter do
       end
     end
 
-    it 'wakes up dead thread' do
+    it 'ensures thread is exists and is alive' do
       subject.instance_variable_get("@thread").kill
       expect(subject.instance_variable_get("@thread")).to_not be_alive
       subject.instrument(:foo)
