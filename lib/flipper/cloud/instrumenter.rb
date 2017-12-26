@@ -67,10 +67,9 @@ module Flipper
               shutdown, events = events.partition { |event| event == SHUTDOWN }
               submit_events(events)
             rescue => boom
-              p boom: boom, response: response, body: response.body
-              # TODO: do something with boom like log or report to cloud
+              # TODO: Do something with boom like log or report to cloud.
             ensure
-              # TODO: flush any remaining events here?
+              # TODO: Flush any remaining events here?
               break if shutdown
             end
           end
@@ -95,9 +94,9 @@ module Flipper
         body = JSON.generate(attributes)
         response = client.post("/events", body)
 
-        # TODO: never raise here, just report some statistic instead
+        # TODO: Never raise here, just report some statistic instead.
         # TODO: Handle failures (not 201) by retrying for a period of time or
-        # maximum number of retries.
+        # maximum number of retries (with backoff).
         raise "Response error: #{response}" if response.code.to_i / 100 != 2
       end
     end
