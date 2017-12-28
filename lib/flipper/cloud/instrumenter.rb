@@ -12,6 +12,7 @@ module Flipper
       end
 
       SHUTDOWN = Object.new
+      HOSTNAME = Socket.gethostbyname(Socket.gethostname).first rescue Socket.gethostname
 
       def initialize(configuration)
         @configuration = configuration
@@ -87,7 +88,7 @@ module Flipper
           version: Flipper::VERSION,
           platform: "ruby",
           platform_version: RUBY_VERSION,
-          hostname: Socket.gethostname,
+          hostname: HOSTNAME,
           pid: Process.pid,
           client_timestamp: Instrumenter.timestamp,
         }
