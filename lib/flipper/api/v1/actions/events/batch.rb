@@ -1,34 +1,45 @@
+require "forwardable"
+
 module Flipper
   module Api
     module V1
       module Actions
         class Events < Api::Action
           class Batch
-            attr_reader :ip, :pid, :hostname,
-                        :user_agent, :version, :platform, :platform_version,
+            extend Forwardable
+
+            attr_reader :request,
+                        :pid, :hostname,
+                        :version, :platform, :platform_version,
                         :event_capacity, :event_flush_interval,
                         :client_timestamp, :timestamp,
                         :events
 
-            def initialize(attributes = {})
-              @ip = attributes.fetch(:ip)
-              @pid = attributes.fetch(:pid)
-              @hostname = attributes.fetch(:hostname)
+            def_delegators :@request, :ip, :user_agent
 
-              @user_agent = attributes.fetch(:user_agent)
-              @version = attributes.fetch(:version)
-              @platform = attributes.fetch(:platform)
-              @platform_version = attributes.fetch(:platform_version)
+            def initialize(request)
+              @request = request
 
-              @event_capacity = attributes.fetch(:event_capacity)
-              @event_flush_interval = attributes.fetch(:event_flush_interval)
+              @pid = data.fetch("pid")
+              @hostname = data.fetch("hostname")
 
-              @client_timestamp = attributes.fetch(:client_timestamp)
-              @timestamp = attributes.fetch(:timestamp) do
-                Cloud::Instrumenter.clock_milliseconds
+              @version = data.fetch("version")
+              @platform = data.fetch("platform")
+              @platform_version = data.fetch("platform_version")
+
+              @event_capacity = data.fetch("event_capacity")
+              @event_flush_interval = data.fetch("event_flush_interval")
+
+              @client_timestamp = data.fetch("client_timestamp")
+              @timestamp = Cloud::Instrumenter.timestamp
+
+              @events = data.fetch("events").map do |hash|
+                Cloud::Instrumenter::Event.from_hash(hash)
               end
+            end
 
-              @events = attributes.fetch(:events)
+            def data
+              @data ||= JSON.parse(request.body.read)
             end
           end
         end

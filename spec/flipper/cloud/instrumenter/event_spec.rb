@@ -27,7 +27,7 @@ RSpec.describe Flipper::Cloud::Instrumenter::Event do
       "dimensions" => dimensions,
     }
   end
-  let(:timestamp) { Flipper::Cloud::Instrumenter.clock_milliseconds }
+  let(:timestamp) { Flipper::Cloud::Instrumenter.timestamp }
 
   describe '.from_hash' do
     it 'sets type' do
@@ -67,7 +67,7 @@ RSpec.describe Flipper::Cloud::Instrumenter::Event do
 
   describe '#initialize' do
     it 'defaults timestamp' do
-      now = Flipper::Cloud::Instrumenter.clock_milliseconds
+      now = Flipper::Cloud::Instrumenter.timestamp
       instance = described_class.new(type: type)
       expect(instance.timestamp >= now).to be(true)
     end
@@ -91,7 +91,7 @@ RSpec.describe Flipper::Cloud::Instrumenter::Event do
     end
 
     it 'allows setting timestamp' do
-      timestamp = Flipper::Cloud::Instrumenter.clock_milliseconds
+      timestamp = Flipper::Cloud::Instrumenter.timestamp
       instance = described_class.new(type: type, timestamp: timestamp)
       expect(instance.timestamp).to eq(timestamp)
     end

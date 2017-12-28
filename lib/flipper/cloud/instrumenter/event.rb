@@ -44,7 +44,7 @@ module Flipper
             dimensions[RESULT_KEY] = payload[:result].to_s
           end
 
-          new(type: type, dimensions: dimensions, timestamp: Instrumenter.clock_milliseconds)
+          new(type: type, dimensions: dimensions, timestamp: Instrumenter.timestamp)
         end
 
         def self.type_from_payload(payload)
@@ -55,7 +55,7 @@ module Flipper
         def initialize(attributes = {})
           @type = attributes.fetch(:type)
           @dimensions = attributes.fetch(:dimensions) { {} }
-          @timestamp = attributes.fetch(:timestamp) { Instrumenter.clock_milliseconds }
+          @timestamp = attributes.fetch(:timestamp) { Instrumenter.timestamp }
         end
 
         def as_json

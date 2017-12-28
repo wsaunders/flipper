@@ -7,8 +7,8 @@ module Flipper
     class Instrumenter
       extend Forwardable
 
-      def self.clock_milliseconds
-        Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+      def self.timestamp(now = Time.now)
+        (now.to_f * 1_000).floor
       end
 
       SHUTDOWN = Object.new
@@ -89,7 +89,7 @@ module Flipper
           platform_version: RUBY_VERSION,
           hostname: Socket.gethostname,
           pid: Process.pid,
-          client_timestamp: Instrumenter.clock_milliseconds,
+          client_timestamp: Instrumenter.timestamp,
         }
         body = JSON.generate(attributes)
         response = client.post("/events", body)

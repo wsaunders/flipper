@@ -8,7 +8,7 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
 
   describe 'post' do
     it 'responds with 201' do
-      now = Flipper::Cloud::Instrumenter.clock_milliseconds
+      now = Flipper::Cloud::Instrumenter.timestamp
       client_timestamp = now - 100
       timestamp = now - 1000
       env = {
