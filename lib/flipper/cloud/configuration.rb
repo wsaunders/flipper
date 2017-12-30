@@ -37,10 +37,27 @@ module Flipper
       #  configuration.instrumenter = ActiveSupport::Notifications
       attr_accessor :instrumenter
 
-      attr_accessor :event_queue
+      # Public: The maximum number of events to buffer in memory. If the queue
+      # size hits this number, events will be discarded rather than enqueued.
+      # This setting exists to allow bounding the memory usage for
+      # buffered events.
       attr_accessor :event_capacity
-      attr_accessor :event_batch_size
+
+      # Public: The number of seconds between event submissions. The thread
+      # submitting events will sleep for event_flush_interval seconds before
+      # attempting to submit events again.
       attr_accessor :event_flush_interval
+
+      # Internal: The queue used to buffer events prior to submission. Standard
+      # library Queue instance by default. You do not need to care about this.
+      attr_accessor :event_queue
+
+      # Internal: The maximum number of events to submit in one request.
+      # If there are 500 events to flush and event_batch_size is 100,
+      # 5 (500 / 100) HTTP requests will be issued instead of 1 (with all 500).
+      # This setting exists to limit the size of payloads submitted to ensure
+      # quick processing. You do not need to care about this.
+      attr_accessor :event_batch_size
 
       def initialize(options = {})
         @token = options.fetch(:token)
