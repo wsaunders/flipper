@@ -12,7 +12,11 @@ module Flipper
       end
 
       SHUTDOWN = Object.new
-      HOSTNAME = Socket.gethostbyname(Socket.gethostname).first rescue Socket.gethostname
+      HOSTNAME = begin
+                   Socket.gethostbyname(Socket.gethostname).first
+                 rescue
+                   Socket.gethostname
+                 end
 
       def initialize(configuration)
         @configuration = configuration
@@ -43,11 +47,8 @@ module Flipper
         ensure_thread_alive
 
         # TODO: Stop enqueueing events if shutting down?
-        if event_queue.size < event_capacity
-          event_queue << event
-        else
-          # TODO: Log drops? Keep statistics on drops and send them to cloud?
-        end
+        # TODO: Log statistics about dropped events and send to cloud?
+        event_queue << event if event_queue.size < event_capacity
       end
 
       def ensure_thread_alive

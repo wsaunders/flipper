@@ -13,7 +13,7 @@ module Flipper
       attr_reader :name, :client
 
       def initialize(options = {})
-        @client = options.fetch(:client) {
+        @client = options.fetch(:client) do
           client_options = {
             url: options.fetch(:url),
             headers: options[:headers],
@@ -24,7 +24,7 @@ module Flipper
             debug_output: options[:debug_output],
           }
           Client.new(client_options)
-        }
+        end
         @name = :http
       end
 
