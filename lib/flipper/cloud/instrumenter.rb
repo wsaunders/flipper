@@ -25,7 +25,11 @@ module Flipper
 
       def instrument(name, payload = {}, &block)
         result = instrumenter.instrument(name, payload, &block)
-        add Event.new_from_name_and_payload(name: name, payload: payload)
+
+        if name == Flipper::Feature::InstrumentationName
+          add payload_to_event(payload)
+        end
+
         result
       end
 
@@ -43,6 +47,22 @@ module Flipper
                      :event_capacity,
                      :event_batch_size,
                      :event_flush_interval
+
+      def payload_to_event(payload)
+        attributes = {
+          type: "enabled",
+          dimensions: {
+            "feature" => payload[:feature_name].to_s,
+            "result" => payload[:result].to_s,
+          },
+          timestamp: Instrumenter.timestamp,
+        }
+
+        thing = payload[:thing]
+        attributes[:dimensions]["flipper_id"] = thing.value if thing
+
+        Event.new(attributes)
+      end
 
       def add(event)
         ensure_thread_alive
@@ -69,7 +89,7 @@ module Flipper
               size.times { events << event_queue.pop(true) }
               shutdown, events = events.partition { |event| event == SHUTDOWN }
               submit_events(events)
-            rescue => boom
+            rescue # rubocop:disable Lint/HandleExceptions
               # TODO: Do something with boom like log or report to cloud.
             ensure
               # TODO: Flush any remaining events here?
@@ -83,7 +103,7 @@ module Flipper
         # TODO: compact nil events
         return if events.empty?
 
-        events.each_slice(event_batch_size) { |slice|
+        events.each_slice(event_batch_size) do |slice|
           # TODO: Bound the number of events per request.
           attributes = {
             events: slice.map(&:as_json),
@@ -102,7 +122,7 @@ module Flipper
           # maximum number of retries (with backoff).
           # TODO: Instrument failures so we can log them or whatever.
           client.post("/events", body)
-        }
+        end
       end
     end
   end

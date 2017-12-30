@@ -24,7 +24,7 @@ RSpec.describe Flipper::Cloud::Instrumenter do
     context 'with block' do
       before do
         @yielded = 0
-        @result = subject.instrument(:foo, bar: "baz") do
+        @result = subject.instrument(Flipper::Feature::InstrumentationName, bar: "baz") do
           @yielded += 1
           :foo_result
         end
@@ -33,7 +33,7 @@ RSpec.describe Flipper::Cloud::Instrumenter do
       it 'sends instrument to wrapped instrumenter' do
         expect(instrumenter.events.size).to be(1)
         event = instrumenter.events.first
-        expect(event.name).to eq(:foo)
+        expect(event.name).to eq(Flipper::Feature::InstrumentationName)
         expect(event.payload).to eq(bar: "baz")
       end
 
@@ -52,13 +52,13 @@ RSpec.describe Flipper::Cloud::Instrumenter do
 
     context 'without block' do
       before do
-        @result = subject.instrument(:foo, bar: "baz")
+        @result = subject.instrument(Flipper::Feature::InstrumentationName, bar: "baz")
       end
 
       it 'sends instrument to wrapped instrumenter' do
         expect(instrumenter.events.size).to be(1)
         event = instrumenter.events.first
-        expect(event.name).to eq(:foo)
+        expect(event.name).to eq(Flipper::Feature::InstrumentationName)
         expect(event.payload).to eq(bar: "baz")
       end
 

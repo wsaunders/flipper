@@ -31,8 +31,8 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
         event_flush_interval: 10,
         client_timestamp: client_timestamp,
         events: [
-          {type: 'enabled', dimensions: dimensions, timestamp: timestamp},
-        ]
+          { type: 'enabled', dimensions: dimensions, timestamp: timestamp },
+        ],
       }
       body = JSON.generate(attributes)
       post '/events', body, env

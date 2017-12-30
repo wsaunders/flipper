@@ -46,25 +46,6 @@ RSpec.describe Flipper::Cloud::Instrumenter::Event do
     end
   end
 
-  describe '.new_from_name_and_payload' do
-    it 'defaults timestamp to now' do
-      instance = described_class.new_from_name_and_payload(name: name, payload: payload)
-      expect(instance.timestamp).to be(instance.timestamp)
-    end
-
-    it 'knows type' do
-      instance = described_class.new_from_name_and_payload(name: name, payload: payload)
-      expect(instance.type).to eq("enabled")
-    end
-
-    it 'knows dimensions' do
-      instance = described_class.new_from_name_and_payload(name: name, payload: payload)
-      expect(instance.dimensions).to eq("feature" => "foo",
-                                        "flipper_id" => "User;23",
-                                        "result" => "true")
-    end
-  end
-
   describe '#initialize' do
     it 'defaults timestamp' do
       now = Flipper::Cloud::Instrumenter.timestamp
