@@ -143,10 +143,11 @@ RSpec.describe Flipper::Cloud do
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
-      instrumenter.shutdown
+      producer = instrumenter.instance_variable_get("@producer")
+      producer.shutdown
 
       expect(@event_receiver.size).to be(1)
-      expect(instrumenter.event_queue.size).to be(0)
+      expect(producer.event_queue.size).to be(0)
     end
   end
 end
