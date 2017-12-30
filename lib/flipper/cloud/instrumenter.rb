@@ -100,7 +100,7 @@ module Flipper
       end
 
       def submit_events(events)
-        # TODO: compact nil events
+        events.compact!
         return if events.empty?
 
         events.each_slice(event_batch_size) do |slice|
