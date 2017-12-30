@@ -39,8 +39,9 @@ module Flipper
       def_delegators :@configuration,
                      :client,
                      :instrumenter,
-                     :event_capacity,
                      :event_queue,
+                     :event_capacity,
+                     :event_batch_size,
                      :event_flush_interval
 
       def add(event)
@@ -79,27 +80,29 @@ module Flipper
       end
 
       def submit_events(events)
+        # TODO: compact nil events
         return if events.empty?
 
-        # TODO: Bound the number of events per request.
-        attributes = {
-          events: events.map(&:as_json),
-          event_capacity: event_capacity,
-          event_flush_interval: event_flush_interval,
-          version: Flipper::VERSION,
-          platform: "ruby",
-          platform_version: RUBY_VERSION,
-          hostname: HOSTNAME,
-          pid: Process.pid,
-          client_timestamp: Instrumenter.timestamp,
+        events.each_slice(event_batch_size) { |slice|
+          # TODO: Bound the number of events per request.
+          attributes = {
+            events: slice.map(&:as_json),
+            event_capacity: event_capacity,
+            event_batch_size: event_batch_size,
+            event_flush_interval: event_flush_interval,
+            version: Flipper::VERSION,
+            platform: "ruby",
+            platform_version: RUBY_VERSION,
+            hostname: HOSTNAME,
+            pid: Process.pid,
+            client_timestamp: Instrumenter.timestamp,
+          }
+          body = JSON.generate(attributes)
+          # TODO: Handle failures (not 201) by retrying for a period of time or
+          # maximum number of retries (with backoff).
+          # TODO: Instrument failures so we can log them or whatever.
+          client.post("/events", body)
         }
-        body = JSON.generate(attributes)
-        response = client.post("/events", body)
-
-        # TODO: Never raise here, just report some statistic instead.
-        # TODO: Handle failures (not 201) by retrying for a period of time or
-        # maximum number of retries (with backoff).
-        raise "Response error: #{response}" if response.code.to_i / 100 != 2
       end
     end
   end

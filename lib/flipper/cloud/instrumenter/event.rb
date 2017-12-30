@@ -16,14 +16,17 @@ module Flipper
         ENABLED_TYPE = "enabled".freeze
 
         def self.from_hash(hash)
-          new(
+          attributes = {
             type: hash.fetch("type"),
             timestamp: hash.fetch("timestamp"),
-            dimensions: hash.fetch("dimensions")
-          )
+            dimensions: hash.fetch("dimensions"),
+          }
+          new attributes
         end
 
         def self.new_from_name_and_payload(attributes = {})
+          # TODO: This method should always return event. Move early return
+          # logic to caller.
           name = attributes.fetch(:name)
           payload = attributes.fetch(:payload)
           return unless name == Flipper::Feature::InstrumentationName
@@ -44,7 +47,12 @@ module Flipper
             dimensions[RESULT_KEY] = payload[:result].to_s
           end
 
-          new(type: type, dimensions: dimensions, timestamp: Instrumenter.timestamp)
+          attributes = {
+            type: type,
+            dimensions: dimensions,
+            timestamp: Instrumenter.timestamp,
+          }
+          new(attributes)
         end
 
         def self.type_from_payload(payload)

@@ -39,6 +39,7 @@ module Flipper
 
       attr_accessor :event_queue
       attr_accessor :event_capacity
+      attr_accessor :event_batch_size
       attr_accessor :event_flush_interval
 
       def initialize(options = {})
@@ -46,8 +47,9 @@ module Flipper
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
         @read_timeout = options.fetch(:read_timeout, 5)
         @open_timeout = options.fetch(:open_timeout, 5)
-        @event_capacity = options.fetch(:event_capacity, 10_000)
         @event_queue = options.fetch(:event_queue, Queue.new)
+        @event_capacity = options.fetch(:event_capacity, 10_000)
+        @event_batch_size = options.fetch(:event_batch_size, 1_000)
         @event_flush_interval = options.fetch(:event_flush_interval, 10)
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }

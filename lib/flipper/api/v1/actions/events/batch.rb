@@ -11,7 +11,7 @@ module Flipper
             attr_reader :request,
                         :pid, :hostname,
                         :version, :platform, :platform_version,
-                        :event_capacity, :event_flush_interval,
+                        :event_capacity, :event_flush_interval, :event_batch_size,
                         :client_timestamp, :timestamp,
                         :events
 
@@ -29,6 +29,7 @@ module Flipper
 
               @event_capacity = data.fetch("event_capacity")
               @event_flush_interval = data.fetch("event_flush_interval")
+              @event_batch_size = data.fetch("event_batch_size")
 
               @client_timestamp = data.fetch("client_timestamp")
               @timestamp = Cloud::Instrumenter.timestamp
