@@ -20,17 +20,21 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
         'flipper_id' => 'User;23',
         'result' => 'true',
       }
-      body = JSON.generate(pid: 123,
-                           hostname: 'foobar.com',
-                           version: Flipper::VERSION,
-                           platform: 'ruby',
-                           platform_version: '2.3.3',
-                           event_capacity: 10000,
-                           event_flush_interval: 10,
-                           client_timestamp: client_timestamp,
-                           events: [
-                             { type: 'enabled', dimensions: dimensions, timestamp: timestamp },
-                           ])
+      attributes = {
+        pid: 123,
+        hostname: 'foobar.com',
+        version: Flipper::VERSION,
+        platform: 'ruby',
+        platform_version: '2.3.3',
+        event_capacity: 10_000,
+        event_batch_size: 1_000,
+        event_flush_interval: 10,
+        client_timestamp: client_timestamp,
+        events: [
+          {type: 'enabled', dimensions: dimensions, timestamp: timestamp},
+        ]
+      }
+      body = JSON.generate(attributes)
       post '/events', body, env
 
       expect(last_response.status).to be(201)
