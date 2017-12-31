@@ -17,7 +17,6 @@ module Flipper
 
       def initialize(configuration)
         @configuration = configuration
-        ensure_thread_alive
       end
 
       def produce(event)

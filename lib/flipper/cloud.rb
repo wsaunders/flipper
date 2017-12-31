@@ -1,4 +1,5 @@
 require "flipper/cloud/configuration"
+require "flipper/cloud/event"
 
 module Flipper
   module Cloud
