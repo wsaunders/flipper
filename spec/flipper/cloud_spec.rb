@@ -5,6 +5,7 @@ require 'flipper/instrumenters/memory'
 require 'flipper/adapters/instrumented'
 require 'flipper/adapters/pstore'
 require 'rack/handler/webrick'
+require 'active_support/notifications'
 
 RSpec.describe Flipper::Cloud do
   context "initialize with token" do
@@ -38,7 +39,7 @@ RSpec.describe Flipper::Cloud do
     end
 
     it 'uses noop instrumenter' do
-      expect(@instance.instrumenter.instrumenter).to be(Flipper::Instrumenters::Noop)
+      expect(@instance.instrumenter).to be(Flipper::Instrumenters::Noop)
     end
   end
 
@@ -59,9 +60,9 @@ RSpec.describe Flipper::Cloud do
   end
 
   it 'can set instrumenter' do
-    instrumenter = Flipper::Instrumenters::Memory.new
+    instrumenter = ActiveSupport::Notifications
     instance = described_class.new('asdf', instrumenter: instrumenter)
-    expect(instance.instrumenter.instrumenter).to be(instrumenter)
+    expect(instance.instrumenter).to be(instrumenter)
   end
 
   it 'allows wrapping adapter with another adapter like the instrumenter' do
@@ -93,10 +94,13 @@ RSpec.describe Flipper::Cloud do
   end
 
   context 'integration' do
+    let(:configuration) { subject; @configuration }
     subject do
       described_class.new("asdf") do |config|
+        @configuration = config
         config.url = "http://localhost:#{FLIPPER_SPEC_API_PORT}"
         config.event_flush_interval = 0.1
+        config.instrumenter = ActiveSupport::Notifications
       end
     end
 
@@ -143,11 +147,10 @@ RSpec.describe Flipper::Cloud do
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
-      producer = instrumenter.instance_variable_get("@producer")
-      producer.shutdown
+      configuration.event_producer.shutdown
 
       expect(@event_receiver.size).to be(1)
-      expect(producer.event_queue.size).to be(0)
+      expect(configuration.event_queue.size).to be(0)
     end
   end
 end

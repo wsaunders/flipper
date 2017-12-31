@@ -1,6 +1,5 @@
 require 'flipper/api/action'
-require 'flipper/cloud/instrumenter'
-require 'flipper/cloud/instrumenter/event'
+require 'flipper/cloud/event'
 require 'flipper/api/v1/actions/events/batch'
 
 module Flipper

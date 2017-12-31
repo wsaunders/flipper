@@ -32,10 +32,10 @@ module Flipper
               @event_batch_size = data.fetch("event_batch_size")
 
               @client_timestamp = data.fetch("client_timestamp")
-              @timestamp = Cloud::Instrumenter.timestamp
+              @timestamp = Cloud.timestamp
 
               @events = data.fetch("events").map do |hash|
-                Cloud::Instrumenter::Event.from_hash(hash)
+                Cloud::Event.from_hash(hash)
               end
             end
 

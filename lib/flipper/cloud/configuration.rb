@@ -1,6 +1,7 @@
 require 'thread'
 require 'flipper/adapters/http'
 require 'flipper/instrumenters/noop'
+require 'flipper/cloud/producer'
 
 module Flipper
   module Cloud
@@ -48,6 +49,10 @@ module Flipper
       # attempting to submit events again.
       attr_accessor :event_flush_interval
 
+      # Internal: The producer used to buffer events as they happen and
+      # eventually ship them to cloud.
+      attr_accessor :event_producer
+
       # Internal: The queue used to buffer events prior to submission. Standard
       # library Queue instance by default. You do not need to care about this.
       attr_accessor :event_queue
@@ -64,7 +69,8 @@ module Flipper
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
         @read_timeout = options.fetch(:read_timeout, 5)
         @open_timeout = options.fetch(:open_timeout, 5)
-        @event_queue = options.fetch(:event_queue, Queue.new)
+        @event_queue = options.fetch(:event_queue) { Queue.new }
+        @event_producer = options.fetch(:event_producer) { Producer.new(self) }
         @event_capacity = options.fetch(:event_capacity, 10_000)
         @event_batch_size = options.fetch(:event_batch_size, 1_000)
         @event_flush_interval = options.fetch(:event_flush_interval, 10)

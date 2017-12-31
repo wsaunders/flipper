@@ -1,3 +1,6 @@
+require "json"
+require "socket"
+require "thread"
 require "forwardable"
 
 module Flipper
@@ -14,6 +17,7 @@ module Flipper
 
       def initialize(configuration)
         @configuration = configuration
+        ensure_thread_alive
       end
 
       def produce(event)
@@ -73,7 +77,7 @@ module Flipper
             platform_version: RUBY_VERSION,
             hostname: HOSTNAME,
             pid: Process.pid,
-            client_timestamp: Instrumenter.timestamp,
+            client_timestamp: Cloud.timestamp,
           }
           body = JSON.generate(attributes)
           # TODO: Handle failures (not 201) by retrying for a period of time or
