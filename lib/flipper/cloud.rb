@@ -17,7 +17,8 @@ module Flipper
       configuration = Configuration.new(options.merge(token: token))
       yield configuration if block_given?
 
-      configuration.instrumenter.subscribe(Flipper::Feature::InstrumentationName) do |name, start, finish, id, payload|
+      configuration.instrumenter.subscribe(Flipper::Feature::InstrumentationName) do |*args|
+        _name, _start, _finish, _id, payload = args
         attributes = {
           type: "enabled",
           dimensions: {

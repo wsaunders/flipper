@@ -5,7 +5,7 @@ module Flipper
         yield payload if block_given?
       end
 
-      def self.subscribe(*args, &block)
+      def self.subscribe(*_args, &_block)
       end
     end
   end

@@ -34,3 +34,8 @@ sass_options = {
   output: 'lib/flipper/ui/public/css',
 }
 guard 'sass', sass_options
+
+guard :rubocop do
+  watch(/.+\.rb$/)
+  watch(%r{(?:.+/)?\.rubocop(?:_todo)?\.yml$}) { |m| File.dirname(m[0]) }
+end
