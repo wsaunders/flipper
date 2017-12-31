@@ -98,6 +98,7 @@ RSpec.describe Flipper::Cloud do
       subject # make sure subject has been loaded to define @configuration
       @configuration
     end
+
     subject do
       described_class.new("asdf") do |config|
         @configuration = config
