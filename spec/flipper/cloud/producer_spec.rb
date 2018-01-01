@@ -35,6 +35,7 @@ RSpec.describe Flipper::Cloud::Producer do
 
   it 'creates thread on produce and kills on shutdown' do
     stub_request(:post, "https://www.featureflipper.com/adapter/events")
+    configuration.event_flush_interval = 0.1
 
     expect(subject.instance_variable_get("@worker_thread")).to be_nil
     expect(subject.instance_variable_get("@timer_thread")).to be_nil
@@ -45,6 +46,8 @@ RSpec.describe Flipper::Cloud::Producer do
     expect(subject.instance_variable_get("@timer_thread")).to be_instance_of(Thread)
 
     subject.shutdown
+
+    sleep configuration.event_flush_interval * 2
 
     expect(subject.instance_variable_get("@worker_thread")).not_to be_alive
     expect(subject.instance_variable_get("@timer_thread")).not_to be_alive
