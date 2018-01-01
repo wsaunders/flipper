@@ -20,48 +20,69 @@ module Flipper
       end
 
       def produce(event)
-        ensure_thread_alive
+        ensure_threads_alive
 
         # TODO: Stop enqueueing events if shutting down?
         # TODO: Log statistics about dropped events and send to cloud?
-        event_queue << event if event_queue.size < event_capacity
+        event_queue << [:produce, event] if event_queue.size < event_capacity
+
+        nil
+      end
+
+      def deliver
+        event_queue << [:deliver, nil]
+
+        nil
       end
 
       def shutdown
-        event_queue << SHUTDOWN
+        @timer_thread && @timer_thread.exit
+        event_queue << [:shutdown, nil]
         @thread.join
+
+        nil
       end
 
       private
 
-      def ensure_thread_alive
+      def ensure_threads_alive
         @thread = create_thread unless @thread && @thread.alive?
+        @timer_thread = create_timer_thread unless @timer_thread && @timer_thread.alive?
       end
 
       def create_thread
         Thread.new do
-          shutdown = false
+          events = []
 
           loop do
-            begin
-              sleep event_flush_interval
+            operation, item = event_queue.pop
 
-              events = []
-              size = event_queue.size
-              size.times { events << event_queue.pop(true) }
-              shutdown, events = events.partition { |event| event == SHUTDOWN }
-              submit_events events
-            rescue # rubocop:disable Lint/HandleExceptions
-              # TODO: Do something with boom like log or report to cloud.
-            ensure
-              # TODO: Flush any remaining events here?
-              break if shutdown
+            case operation
+            when :shutdown
+              submit events
+              break
+            when :produce
+              events << item
+            when :deliver
+              submit events
+              events.clear
+            else
+              raise "unknown operation: #{operation}"
             end
           end
         end
       end
 
-      def submit_events(events)
+      def create_timer_thread
+        Thread.new do
+          loop do
+            sleep event_flush_interval
+            deliver
+          end
+        end
+      end
+
+      def submit(events)
         events.compact!
         return if events.empty?
 
@@ -79,11 +100,12 @@ module Flipper
             client_timestamp: Cloud.timestamp,
           }
           body = JSON.generate(attributes)
-          # TODO: Handle failures (not 201) by retrying for a period of time or
-          # maximum number of retries (with backoff).
-          # TODO: Instrument failures so we can log them or whatever.
           client.post("/events", body)
         end
+      rescue # rubocop:disable Lint/HandleExceptions
+        # TODO: Handle failures (not 201) by retrying for a period of time or
+        # maximum number of retries (with backoff).
+        # TODO: Instrument failures so we can log them or whatever.
       end
 
       def_delegators :@configuration,

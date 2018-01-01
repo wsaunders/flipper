@@ -77,6 +77,10 @@ module Flipper
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }
 
+        if @event_flush_interval <= 0
+          raise ArgumentError, "event_flush_interval must be greater than zero"
+        end
+
         self.url = options.fetch(:url, DEFAULT_URL)
       end
 

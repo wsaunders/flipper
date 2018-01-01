@@ -8,6 +8,8 @@ RSpec.describe Flipper::Cloud::Producer do
   let(:configuration) do
     attributes = {
       token: "asdf",
+      event_capacity: 10,
+      event_batch_size: 5,
     }
     Flipper::Cloud::Configuration.new(attributes)
   end
@@ -26,6 +28,15 @@ RSpec.describe Flipper::Cloud::Producer do
   end
 
   subject { configuration.event_producer }
+
+  before do
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+      .to_return(status: 201)
+  end
+
+  after do
+    subject.shutdown
+  end
 
   it 'creates thread on produce and kills on shutdown' do
     expect(subject.instance_variable_get("@thread")).to be_nil

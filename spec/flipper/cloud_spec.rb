@@ -103,7 +103,6 @@ RSpec.describe Flipper::Cloud do
       described_class.new("asdf") do |config|
         @configuration = config
         config.url = "http://localhost:#{FLIPPER_SPEC_API_PORT}"
-        config.event_flush_interval = 0.1
         config.instrumenter = ActiveSupport::Notifications
       end
     end
