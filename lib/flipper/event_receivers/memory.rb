@@ -1,6 +1,7 @@
 module Flipper
   module EventReceivers
     class Memory
+      extend Forwardable
       include Enumerable
 
       def initialize
@@ -16,6 +17,8 @@ module Flipper
       end
 
       alias_method :size, :count
+
+      def_delegator :@batches, :clear
     end
   end
 end

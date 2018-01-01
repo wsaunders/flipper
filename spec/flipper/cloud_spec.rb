@@ -140,6 +140,7 @@ RSpec.describe Flipper::Cloud do
     end
 
     before(:each) do
+      @event_receiver.clear
       @pstore_file.unlink if @pstore_file.exist?
     end
 
