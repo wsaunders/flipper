@@ -100,12 +100,30 @@ module Flipper
             client_timestamp: Cloud.timestamp,
           }
           body = JSON.generate(attributes)
-          client.post("/events", body)
+
+          # TODO: Handle failures (not 201) by retrying for a period of time or
+          # maximum number of retries (with backoff).
+          response = client.post("/events", body)
+          instrument_response_error(response) if response.code.to_i != 201
+
+          nil
         end
-      rescue # rubocop:disable Lint/HandleExceptions
-        # TODO: Handle failures (not 201) by retrying for a period of time or
-        # maximum number of retries (with backoff).
-        # TODO: Instrument failures so we can log them or whatever.
+      rescue => exception
+        instrument_exception(exception)
+      end
+
+      def instrument_response_error(response)
+        payload = {
+          response: response,
+        }
+        instrumenter.instrument("producer_submission_response_error.flipper", payload)
+      end
+
+      def instrument_exception(exception)
+        payload = {
+          exception: exception,
+        }
+        instrumenter.instrument("producer_submission_exception.flipper", payload)
       end
 
       def_delegators :@configuration,
@@ -113,7 +131,8 @@ module Flipper
                      :event_queue,
                      :event_capacity,
                      :event_batch_size,
-                     :event_flush_interval
+                     :event_flush_interval,
+                     :instrumenter
     end
   end
 end

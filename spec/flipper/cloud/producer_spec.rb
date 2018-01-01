@@ -3,13 +3,19 @@ require 'flipper/cloud'
 require 'flipper/cloud/event'
 require 'flipper/cloud/configuration'
 require 'flipper/cloud/producer'
+require 'flipper/instrumenters/memory'
 
 RSpec.describe Flipper::Cloud::Producer do
+  let(:instrumenter) do
+    Flipper::Instrumenters::Memory.new
+  end
+
   let(:configuration) do
     attributes = {
       token: "asdf",
       event_capacity: 10,
       event_batch_size: 5,
+      instrumenter: instrumenter,
     }
     Flipper::Cloud::Configuration.new(attributes)
   end
@@ -29,12 +35,11 @@ RSpec.describe Flipper::Cloud::Producer do
 
   subject { configuration.event_producer }
 
-  after do
-    subject.shutdown
+  before do
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
   end
 
   it 'creates thread on produce and kills on shutdown' do
-    stub_request(:post, "https://www.featureflipper.com/adapter/events")
     configuration.event_flush_interval = 0.1
 
     expect(subject.instance_variable_get("@worker_thread")).to be_nil
@@ -67,5 +72,30 @@ RSpec.describe Flipper::Cloud::Producer do
     5.times { subject.produce(event) }
     subject.deliver
     subject.shutdown
+  end
+
+  it 'instruments producer submission response errors' do
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+      .to_return(status: 500)
+    subject.produce(event)
+    subject.shutdown
+    submission_event = instrumenter.events.detect do |event|
+      event.name == "producer_submission_response_error.flipper"
+    end
+    expect(submission_event).not_to be_nil
+    expect(submission_event.payload[:response]).to be_instance_of(Net::HTTPInternalServerError)
+  end
+
+  it 'instruments producer submission exceptions' do
+    exception = StandardError.new
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+      .to_raise(exception)
+    subject.produce(event)
+    subject.shutdown
+    submission_event = instrumenter.events.detect do |event|
+      event.name == "producer_submission_exception.flipper"
+    end
+    expect(submission_event).not_to be_nil
+    expect(submission_event.payload[:exception]).to be(exception)
   end
 end
