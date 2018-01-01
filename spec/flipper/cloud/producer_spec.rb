@@ -29,20 +29,40 @@ RSpec.describe Flipper::Cloud::Producer do
 
   subject { configuration.event_producer }
 
-  before do
-    stub_request(:post, "https://www.featureflipper.com/adapter/events")
-      .to_return(status: 201)
-  end
-
   after do
     subject.shutdown
   end
 
   it 'creates thread on produce and kills on shutdown' do
-    expect(subject.instance_variable_get("@thread")).to be_nil
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+
+    expect(subject.instance_variable_get("@worker_thread")).to be_nil
+    expect(subject.instance_variable_get("@timer_thread")).to be_nil
+
     subject.produce(event)
-    expect(subject.instance_variable_get("@thread")).to be_instance_of(Thread)
+
+    expect(subject.instance_variable_get("@worker_thread")).to be_instance_of(Thread)
+    expect(subject.instance_variable_get("@timer_thread")).to be_instance_of(Thread)
+
     subject.shutdown
-    expect(subject.instance_variable_get("@thread")).not_to be_alive
+
+    expect(subject.instance_variable_get("@worker_thread")).not_to be_alive
+    expect(subject.instance_variable_get("@timer_thread")).not_to be_alive
+  end
+
+  it 'can produce messages' do
+    block = lambda do |request|
+      data = JSON.parse(request.body)
+      events = data.fetch("events")
+      events.size == 5
+    end
+
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+      .with(&block)
+      .to_return(status: 201)
+
+    5.times { subject.produce(event) }
+    subject.deliver
+    subject.shutdown
   end
 end

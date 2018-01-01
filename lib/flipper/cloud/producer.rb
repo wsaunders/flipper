@@ -36,9 +36,9 @@ module Flipper
       end
 
       def shutdown
-        @timer_thread && @timer_thread.exit
+        @timer_thread.exit if @timer_thread
         event_queue << [:shutdown, nil]
-        @thread.join
+        @worker_thread.join if @worker_thread
 
         nil
       end
@@ -46,7 +46,7 @@ module Flipper
       private
 
       def ensure_threads_alive
-        @thread = create_thread unless @thread && @thread.alive?
+        @worker_thread = create_thread unless @worker_thread && @worker_thread.alive?
         @timer_thread = create_timer_thread unless @timer_thread && @timer_thread.alive?
       end
 
