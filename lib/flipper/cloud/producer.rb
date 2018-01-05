@@ -87,6 +87,7 @@ module Flipper
         return if events.empty?
 
         events.each_slice(event_batch_size) do |slice|
+          # TODO: move these to client or http adapter as headers or something
           attributes = {
             events: slice.map(&:as_json),
             event_capacity: event_capacity,
