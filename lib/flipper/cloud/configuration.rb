@@ -129,7 +129,7 @@ module Flipper
             "FLIPPER_PLATFORM_VERSION" => RUBY_VERSION,
             "FLIPPER_HOSTNAME" => HOSTNAME,
             "FLIPPER_PID" => Process.pid.to_s,
-            "FLIPPER_TIMESTAMP" => Flipper.timestamp.to_s,
+            "FLIPPER_TIMESTAMP" => Flipper::Util.timestamp.to_s,
           },
         }
         Flipper::Adapters::Http::Client.new(client_options)

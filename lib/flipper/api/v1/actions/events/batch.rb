@@ -1,4 +1,6 @@
 require "forwardable"
+require "flipper/event"
+require "flipper/util"
 
 module Flipper
   module Api
@@ -33,10 +35,10 @@ module Flipper
               @event_batch_size = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE")
 
               @client_timestamp = @request.get_header("HTTP_FLIPPER_TIMESTAMP")
-              @timestamp = Flipper.timestamp
+              @timestamp = Flipper::Util.timestamp
 
               @raw_events = data.fetch("events") { [] }
-              @events = @raw_events.map { |hash| Cloud::Event.from_hash(hash) }
+              @events = @raw_events.map { |hash| Flipper::Event.from_hash(hash) }
 
               @errors = []
               validate

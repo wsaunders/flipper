@@ -9,21 +9,21 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
   describe 'post' do
     context 'valid' do
       it 'responds with 201' do
-        now = Flipper.timestamp
+        now = Flipper::Util.timestamp
         client_timestamp = now - 100
         timestamp = now - 1000
         env = {
           "CONTENT_TYPE" => "application/json",
           "HTTP_USER_AGENT" => "Flipper",
-          "Flipper-Pid" => "123",
-          "Flipper-Hostname" => "foobar.com",
-          "Flipper-Version" => Flipper::VERSION,
-          "Flipper-Platform" => "ruby",
-          "Flipper-Platform-Version" => "2.3.3",
-          "Flipper-Config-Event-Capacity" => "10000",
-          "Flipper-Config-Event-Flush-Interval" => "10",
-          "Flipper-Config-Event-Batch-Size" => "1000",
-          "Flipper-Timestamp" => client_timestamp.to_s,
+          "HTTP_FLIPPER_PID" => "123",
+          "HTTP_FLIPPER_HOSTNAME" => "foobar.com",
+          "HTTP_FLIPPER_VERSION" => Flipper::VERSION,
+          "HTTP_FLIPPER_PLATFORM" => "ruby",
+          "HTTP_FLIPPER_PLATFORM_VERSION" => "2.3.3",
+          "HTTP_FLIPPER_CONFIG_EVENT_CAPACITY" => "10000",
+          "HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL" => "10",
+          "HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE" => "1000",
+          "HTTP_FLIPPER_TIMESTAMP" => client_timestamp.to_s,
         }
         dimensions = {
           "feature" => "foo",

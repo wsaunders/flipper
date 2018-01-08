@@ -1,7 +1,7 @@
 require 'helper'
-require 'flipper/cloud/event'
+require 'flipper/event'
 
-RSpec.describe Flipper::Cloud::Event do
+RSpec.describe Flipper::Event do
   let(:type) { "enabled" }
   let(:name) { "feature_operation.flipper" }
   let(:dimensions) do
@@ -27,7 +27,7 @@ RSpec.describe Flipper::Cloud::Event do
       "dimensions" => dimensions,
     }
   end
-  let(:timestamp) { Flipper.timestamp }
+  let(:timestamp) { Flipper::Util.timestamp }
 
   describe '.from_hash' do
     it 'sets type' do
@@ -48,7 +48,7 @@ RSpec.describe Flipper::Cloud::Event do
 
   describe '#initialize' do
     it 'defaults timestamp' do
-      now = Flipper.timestamp
+      now = Flipper::Util.timestamp
       instance = described_class.new(type: type)
       expect(instance.timestamp >= now).to be(true)
     end
@@ -72,7 +72,7 @@ RSpec.describe Flipper::Cloud::Event do
     end
 
     it 'allows setting timestamp' do
-      timestamp = Flipper.timestamp
+      timestamp = Flipper::Util.timestamp
       instance = described_class.new(type: type, timestamp: timestamp)
       expect(instance.timestamp).to eq(timestamp)
     end

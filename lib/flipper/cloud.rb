@@ -1,5 +1,5 @@
 require "flipper/cloud/configuration"
-require "flipper/cloud/event"
+require "flipper/event"
 
 module Flipper
   module Cloud
@@ -22,13 +22,13 @@ module Flipper
             "feature" => payload[:feature_name].to_s,
             "result" => payload[:result].to_s,
           },
-          timestamp: Flipper.timestamp,
+          timestamp: Flipper::Util.timestamp,
         }
 
         thing = payload[:thing]
         attributes[:dimensions]["flipper_id"] = thing.value if thing
 
-        event = Event.new(attributes)
+        event = Flipper::Event.new(attributes)
         producer = configuration.event_producer
         producer.produce event
       end

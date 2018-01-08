@@ -1,6 +1,6 @@
 require 'helper'
+require 'flipper/event'
 require 'flipper/cloud'
-require 'flipper/cloud/event'
 require 'flipper/cloud/configuration'
 require 'flipper/cloud/producer'
 require 'flipper/instrumenters/memory'
@@ -28,9 +28,9 @@ RSpec.describe Flipper::Cloud::Producer do
         "flipper_id" => "User;23",
         "result" => "true",
       },
-      timestamp: Flipper.timestamp,
+      timestamp: Flipper::Util.timestamp,
     }
-    Flipper::Cloud::Event.new(attributes)
+    Flipper::Event.new(attributes)
   end
 
   subject { configuration.event_producer }
