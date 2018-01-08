@@ -29,7 +29,7 @@ module Flipper
               @platform_version = @request.get_header("HTTP_FLIPPER_PLATFORM_VERSION")
 
               @event_capacity = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_CAPACITY")
-              @event_flush_interval = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL")
+              @event_flush_interval = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL") # rubocop:disable Style/LineLength
               @event_batch_size = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE")
 
               @client_timestamp = @request.get_header("HTTP_FLIPPER_TIMESTAMP")
