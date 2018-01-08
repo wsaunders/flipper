@@ -137,6 +137,11 @@ module Flipper
   def groups_registry=(registry)
     @groups_registry = registry
   end
+
+  # TODO: move this to a Util module or something, I don't like it top level
+  def timestamp(now = Time.now)
+    (now.to_f * 1_000).floor
+  end
 end
 
 require 'flipper/actor'

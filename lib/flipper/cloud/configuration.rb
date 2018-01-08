@@ -1,3 +1,4 @@
+require 'socket'
 require 'thread'
 require 'flipper/adapters/http'
 require 'flipper/instrumenters/noop'
@@ -106,6 +107,12 @@ module Flipper
       # Public: Set url and uri for the http adapter.
       attr_writer :url
 
+      HOSTNAME = begin
+                   Socket.gethostbyname(Socket.gethostname).first
+                 rescue
+                   Socket.gethostname
+                 end
+
       def client
         client_options = {
           url: @url,
@@ -113,7 +120,16 @@ module Flipper
           open_timeout: @open_timeout,
           debug_output: @debug_output,
           headers: {
-            "Feature-Flipper-Token" => @token,
+            "FEATURE_FLIPPER_TOKEN" => @token,
+            "FLIPPER_CONFIG_EVENT_CAPACITY" => event_capacity.to_s,
+            "FLIPPER_CONFIG_EVENT_BATCH_SIZE" => event_batch_size.to_s,
+            "FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL" => event_flush_interval.to_s,
+            "FLIPPER_VERSION" => Flipper::VERSION,
+            "FLIPPER_PLATFORM" => "ruby",
+            "FLIPPER_PLATFORM_VERSION" => RUBY_VERSION,
+            "FLIPPER_HOSTNAME" => HOSTNAME,
+            "FLIPPER_PID" => Process.pid.to_s,
+            "FLIPPER_TIMESTAMP" => Flipper.timestamp.to_s,
           },
         }
         Flipper::Adapters::Http::Client.new(client_options)

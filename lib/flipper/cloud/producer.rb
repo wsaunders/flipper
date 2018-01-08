@@ -1,5 +1,4 @@
 require "json"
-require "socket"
 require "thread"
 require "forwardable"
 
@@ -9,11 +8,6 @@ module Flipper
       extend Forwardable
 
       SHUTDOWN = Object.new
-      HOSTNAME = begin
-                   Socket.gethostbyname(Socket.gethostname).first
-                 rescue
-                   Socket.gethostname
-                 end
 
       def initialize(configuration)
         @configuration = configuration
@@ -87,20 +81,7 @@ module Flipper
         return if events.empty?
 
         events.each_slice(event_batch_size) do |slice|
-          # TODO: move these to client or http adapter as headers or something
-          attributes = {
-            events: slice.map(&:as_json),
-            event_capacity: event_capacity,
-            event_batch_size: event_batch_size,
-            event_flush_interval: event_flush_interval,
-            version: Flipper::VERSION,
-            platform: "ruby",
-            platform_version: RUBY_VERSION,
-            hostname: HOSTNAME,
-            pid: Process.pid,
-            client_timestamp: Cloud.timestamp,
-          }
-          body = JSON.generate(attributes)
+          body = JSON.generate(events: slice.map(&:as_json))
 
           # TODO: Handle failures (not 201) by retrying for a period of time or
           # maximum number of retries (with backoff).

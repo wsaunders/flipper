@@ -105,7 +105,6 @@ module Flipper
       #
       # object - json serializable object
       # status - http status code
-
       def json_response(object, status = 200)
         header 'Content-Type', Api::CONTENT_TYPE
         status(status)
@@ -117,10 +116,12 @@ module Flipper
       # with the serialized error object as response body
       #
       # error_key - key to lookup error object
-
-      def json_error_response(error_key)
+      # errors - An Array of errors with more details about what went wrong.
+      def json_error_response(error_key, errors = nil)
         error = ErrorResponse::ERRORS.fetch(error_key.to_sym)
-        json_response(error.as_json, error.http_status)
+        data = error.as_json
+        data["errors"] = errors if errors
+        json_response(data, error.http_status)
       end
 
       # Public: Set the status code for the response.

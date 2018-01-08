@@ -35,7 +35,7 @@ RSpec.describe Flipper::Cloud do
 
     it 'sets correct token header' do
       headers = @http_client.instance_variable_get('@headers')
-      expect(headers['Feature-Flipper-Token']).to eq(token)
+      expect(headers['FEATURE_FLIPPER_TOKEN']).to eq(token)
     end
 
     it 'uses noop instrumenter' do
@@ -144,6 +144,10 @@ RSpec.describe Flipper::Cloud do
     end
 
     it 'sends events to event_receiver in batches' do
+      errors = []
+      ActiveSupport::Notifications.subscribe(/producer_submission_.*\.flipper/) do |*args|
+        errors << args
+      end
       actors = Array.new(5) { |i| Flipper::Actor.new("Flipper::Actor;#{i}") }
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
@@ -153,6 +157,7 @@ RSpec.describe Flipper::Cloud do
       subject.enabled?(:foo, actors.sample)
       configuration.event_producer.shutdown
 
+      expect(errors).to eq([])
       expect(@event_receiver.size).to be(1)
       expect(configuration.event_queue.size).to be(0)
     end

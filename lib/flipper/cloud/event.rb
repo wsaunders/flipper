@@ -15,7 +15,7 @@ module Flipper
       def initialize(attributes = {})
         @type = attributes.fetch(:type)
         @dimensions = attributes.fetch(:dimensions) { {} }
-        @timestamp = attributes.fetch(:timestamp) { Cloud.timestamp }
+        @timestamp = attributes.fetch(:timestamp) { Flipper.timestamp }
       end
 
       def as_json

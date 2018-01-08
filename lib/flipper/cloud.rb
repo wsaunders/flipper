@@ -3,10 +3,6 @@ require "flipper/cloud/event"
 
 module Flipper
   module Cloud
-    def self.timestamp(now = Time.now)
-      (now.to_f * 1_000).floor
-    end
-
     # Public: Returns a new Flipper instance with an http adapter correctly
     # configured for flipper cloud.
     #
@@ -26,7 +22,7 @@ module Flipper
             "feature" => payload[:feature_name].to_s,
             "result" => payload[:result].to_s,
           },
-          timestamp: Cloud.timestamp,
+          timestamp: Flipper.timestamp,
         }
 
         thing = payload[:thing]

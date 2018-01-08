@@ -27,7 +27,7 @@ RSpec.describe Flipper::Cloud::Event do
       "dimensions" => dimensions,
     }
   end
-  let(:timestamp) { Flipper::Cloud.timestamp }
+  let(:timestamp) { Flipper.timestamp }
 
   describe '.from_hash' do
     it 'sets type' do
@@ -48,7 +48,7 @@ RSpec.describe Flipper::Cloud::Event do
 
   describe '#initialize' do
     it 'defaults timestamp' do
-      now = Flipper::Cloud.timestamp
+      now = Flipper.timestamp
       instance = described_class.new(type: type)
       expect(instance.timestamp >= now).to be(true)
     end
@@ -72,7 +72,7 @@ RSpec.describe Flipper::Cloud::Event do
     end
 
     it 'allows setting timestamp' do
-      timestamp = Flipper::Cloud.timestamp
+      timestamp = Flipper.timestamp
       instance = described_class.new(type: type, timestamp: timestamp)
       expect(instance.timestamp).to eq(timestamp)
     end
