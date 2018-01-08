@@ -9,11 +9,10 @@ module Flipper
           route %r{events/?\Z}
 
           def post
-            # TODO: validate the entire request first?
             batch = Batch.new(request)
-            event_receiver.call(batch)
 
             if batch.valid?
+              event_receiver.call(batch)
               json_response({}, 201)
             else
               json_error_response(:batch_invalid, batch.errors)

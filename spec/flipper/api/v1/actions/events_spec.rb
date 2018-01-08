@@ -72,8 +72,12 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
         env = {
           "CONTENT_TYPE" => "application/json",
         }
-        post '/events', '{}', env
+        post "/events", "{}", env
+
         expect(last_response.status).to be(422)
+
+        batch = event_receiver.first
+        expect(batch).to be_nil
       end
     end
   end
