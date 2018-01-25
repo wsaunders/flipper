@@ -1,6 +1,22 @@
-## master
+## master 
 
 ### Additions/Changes
+
+* Update PStore adapter to allow setting thread_safe option (https://github.com/jnunemaker/flipper/pull/334).
+
+## 0.12.2
+
+### Additions/Changes
+
+* Improvements/fixes/examples for rollout adapter (https://github.com/jnunemaker/flipper/pull/332).
+
+## 0.12.1
+
+### Additions/Changes
+
+* Added rollout adapter documentation (https://github.com/jnunemaker/flipper/pull/328).  
+
+### Bug Fixes
 
 * Fixed ActiveRecord and Sequel adapters to include disabled features for `get_all` (https://github.com/jnunemaker/flipper/pull/327).
 
