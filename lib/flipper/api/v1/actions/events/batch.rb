@@ -23,18 +23,18 @@ module Flipper
             def initialize(request)
               @request = request
 
-              @pid = @request.get_header("HTTP_FLIPPER_PID")
-              @hostname = @request.get_header("HTTP_FLIPPER_HOSTNAME")
+              @pid = @request.env["HTTP_FLIPPER_PID"]
+              @hostname = @request.env["HTTP_FLIPPER_HOSTNAME"]
 
-              @version = @request.get_header("HTTP_FLIPPER_VERSION")
-              @platform = @request.get_header("HTTP_FLIPPER_PLATFORM")
-              @platform_version = @request.get_header("HTTP_FLIPPER_PLATFORM_VERSION")
+              @version = @request.env["HTTP_FLIPPER_VERSION"]
+              @platform = @request.env["HTTP_FLIPPER_PLATFORM"]
+              @platform_version = @request.env["HTTP_FLIPPER_PLATFORM_VERSION"]
 
-              @event_capacity = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_CAPACITY")
-              @event_flush_interval = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL") # rubocop:disable Style/LineLength
-              @event_batch_size = @request.get_header("HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE")
+              @event_capacity = @request.env["HTTP_FLIPPER_CONFIG_EVENT_CAPACITY"]
+              @event_flush_interval = @request.env["HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL"] # rubocop:disable Style/LineLength
+              @event_batch_size = @request.env["HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE"]
 
-              @client_timestamp = @request.get_header("HTTP_FLIPPER_TIMESTAMP")
+              @client_timestamp = @request.env["HTTP_FLIPPER_TIMESTAMP"]
               @timestamp = Flipper::Util.timestamp
 
               @raw_events = data.fetch("events") { [] }
