@@ -24,16 +24,16 @@ module Flipper
           @debug_output = options[:debug_output]
         end
 
-        def get(path)
-          perform Net::HTTP::Get, path, @headers
+        def get(path, headers: {})
+          perform Net::HTTP::Get, path, @headers.merge(headers)
         end
 
-        def post(path, body = nil)
-          perform Net::HTTP::Post, path, @headers, body: body
+        def post(path, body: nil, headers: {})
+          perform Net::HTTP::Post, path, @headers.merge(headers), body: body
         end
 
-        def delete(path, body = nil)
-          perform Net::HTTP::Delete, path, @headers, body: body
+        def delete(path, body: nil, headers: {})
+          perform Net::HTTP::Delete, path, @headers.merge(headers), body: body
         end
 
         private

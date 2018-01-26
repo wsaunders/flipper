@@ -42,7 +42,7 @@ module Flipper
 
       def add(feature)
         body = JSON.generate(name: feature.key)
-        response = @client.post('/features', body)
+        response = @client.post('/features', body: body)
         response.is_a?(Net::HTTPOK)
       end
 
@@ -100,7 +100,7 @@ module Flipper
       def enable(feature, gate, thing)
         body = request_body_for_gate(gate, thing.value.to_s)
         query_string = gate.key == :groups ? "?allow_unregistered_groups=true" : ""
-        response = @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body)
+        response = @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
         response.is_a?(Net::HTTPOK)
       end
 
@@ -110,9 +110,9 @@ module Flipper
         response =
           case gate.key
           when :percentage_of_actors, :percentage_of_time
-            @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body)
+            @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
           else
-            @client.delete("/features/#{feature.key}/#{gate.key}#{query_string}", body)
+            @client.delete("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
           end
         response.is_a?(Net::HTTPOK)
       end
