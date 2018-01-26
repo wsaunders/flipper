@@ -128,8 +128,7 @@ module Flipper
       private
 
       def url_for(path)
-        # TODO: get rid of file join for url joining as it won't work right on windows
-        File.join(@url, path)
+        Flipper::Util.url_for(@url, path)
       end
 
       def request_body_for_gate(gate, value)

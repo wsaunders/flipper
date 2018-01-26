@@ -82,11 +82,11 @@ module Flipper
 
         events.each_slice(event_batch_size) do |slice|
           body = JSON.generate(events: slice.map(&:as_json))
+          post_url = Flipper::Util.url_for(url, "/events")
 
           # TODO: Handle failures (not 201) by retrying for a period of time or
           # maximum number of retries (with backoff).
-          # TODO: get rid of file join for url joining as it won't work right on windows
-          response = client.post(File.join(url, "/events"), body: body)
+          response = client.post(post_url, body: body)
           instrument_response_error(response) if response.code.to_i != 201
 
           nil
