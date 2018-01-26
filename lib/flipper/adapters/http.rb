@@ -10,12 +10,12 @@ module Flipper
     class Http
       include Flipper::Adapter
 
-      attr_reader :name, :client
+      attr_reader :name, :client, :url
 
       def initialize(options = {})
+        @url = options.fetch(:url)
         @client = options.fetch(:client) do
           client_options = {
-            url: options.fetch(:url),
             headers: options[:headers],
             basic_auth_username: options[:basic_auth_username],
             basic_auth_password: options[:basic_auth_password],
@@ -29,7 +29,7 @@ module Flipper
       end
 
       def get(feature)
-        response = @client.get("/features/#{feature.key}")
+        response = @client.get(url_for("/features/#{feature.key}"))
         if response.is_a?(Net::HTTPOK)
           parsed_response = JSON.parse(response.body)
           result_for_feature(feature, parsed_response.fetch('gates'))
@@ -42,13 +42,13 @@ module Flipper
 
       def add(feature)
         body = JSON.generate(name: feature.key)
-        response = @client.post('/features', body: body)
+        response = @client.post(url_for('/features'), body: body)
         response.is_a?(Net::HTTPOK)
       end
 
       def get_multi(features)
         csv_keys = features.map(&:key).join(',')
-        response = @client.get("/features?keys=#{csv_keys}")
+        response = @client.get(url_for("/features?keys=#{csv_keys}"))
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -66,7 +66,7 @@ module Flipper
       end
 
       def get_all
-        response = @client.get("/features")
+        response = @client.get(url_for("/features"))
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -85,7 +85,7 @@ module Flipper
       end
 
       def features
-        response = @client.get('/features')
+        response = @client.get(url_for('/features'))
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -93,14 +93,15 @@ module Flipper
       end
 
       def remove(feature)
-        response = @client.delete("/features/#{feature.key}")
+        response = @client.delete(url_for("/features/#{feature.key}"))
         response.is_a?(Net::HTTPNoContent)
       end
 
       def enable(feature, gate, thing)
         body = request_body_for_gate(gate, thing.value.to_s)
         query_string = gate.key == :groups ? "?allow_unregistered_groups=true" : ""
-        response = @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
+        url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
+        response = @client.post(url, body: body)
         response.is_a?(Net::HTTPOK)
       end
 
@@ -110,19 +111,26 @@ module Flipper
         response =
           case gate.key
           when :percentage_of_actors, :percentage_of_time
-            @client.post("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
+            url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
+            @client.post(url, body: body)
           else
-            @client.delete("/features/#{feature.key}/#{gate.key}#{query_string}", body: body)
+            url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
+            @client.delete(url, body: body)
           end
         response.is_a?(Net::HTTPOK)
       end
 
       def clear(feature)
-        response = @client.delete("/features/#{feature.key}/clear")
+        response = @client.delete(url_for("/features/#{feature.key}/clear"))
         response.is_a?(Net::HTTPNoContent)
       end
 
       private
+
+      def url_for(path)
+        # TODO: get rid of file join for url joining as it won't work right on windows
+        File.join(@url, path)
+      end
 
       def request_body_for_gate(gate, value)
         data = case gate.key

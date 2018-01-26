@@ -115,7 +115,6 @@ module Flipper
 
       def client
         client_options = {
-          url: @url,
           read_timeout: @read_timeout,
           open_timeout: @open_timeout,
           debug_output: @debug_output,
@@ -138,7 +137,7 @@ module Flipper
       private
 
       def http_adapter
-        Flipper::Adapters::Http.new(client: client)
+        Flipper::Adapters::Http.new(url: @url, client: client)
       end
     end
   end

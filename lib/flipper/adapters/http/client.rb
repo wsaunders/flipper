@@ -15,7 +15,6 @@ module Flipper
         HTTPS_SCHEME = "https".freeze
 
         def initialize(options = {})
-          @uri = URI(options.fetch(:url))
           @headers = DEFAULT_HEADERS.merge(options[:headers] || {})
           @basic_auth_username = options[:basic_auth_username]
           @basic_auth_password = options[:basic_auth_password]
@@ -24,33 +23,25 @@ module Flipper
           @debug_output = options[:debug_output]
         end
 
-        def get(path, headers: {})
-          perform Net::HTTP::Get, path, @headers.merge(headers)
+        def get(url, headers: {})
+          perform Net::HTTP::Get, url, @headers.merge(headers)
         end
 
-        def post(path, body: nil, headers: {})
-          perform Net::HTTP::Post, path, @headers.merge(headers), body: body
+        def post(url, body: nil, headers: {})
+          perform Net::HTTP::Post, url, @headers.merge(headers), body: body
         end
 
-        def delete(path, body: nil, headers: {})
-          perform Net::HTTP::Delete, path, @headers.merge(headers), body: body
+        def delete(url, body: nil, headers: {})
+          perform Net::HTTP::Delete, url, @headers.merge(headers), body: body
         end
 
         private
 
-        def perform(http_method, path, headers = {}, options = {})
-          uri = uri_for_path(path)
+        def perform(http_method, url, headers = {}, options = {})
+          uri = URI(url)
           http = build_http(uri)
           request = build_request(http_method, uri, headers, options)
           http.request(request)
-        end
-
-        def uri_for_path(path)
-          uri = @uri.dup
-          path_uri = URI(path)
-          uri.path += path_uri.path
-          uri.query = "#{uri.query}&#{path_uri.query}" if path_uri.query
-          uri
         end
 
         def build_http(uri)

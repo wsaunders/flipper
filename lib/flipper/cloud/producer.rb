@@ -85,7 +85,8 @@ module Flipper
 
           # TODO: Handle failures (not 201) by retrying for a period of time or
           # maximum number of retries (with backoff).
-          response = client.post("/events", body)
+          # TODO: get rid of file join for url joining as it won't work right on windows
+          response = client.post(File.join(url, "/events"), body: body)
           instrument_response_error(response) if response.code.to_i != 201
 
           nil
@@ -109,6 +110,7 @@ module Flipper
       end
 
       def_delegators :@configuration,
+                     :url,
                      :client,
                      :event_queue,
                      :event_capacity,

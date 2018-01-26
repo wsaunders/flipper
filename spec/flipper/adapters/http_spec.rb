@@ -55,8 +55,8 @@ RSpec.describe Flipper::Adapters::Http do
   end
 
   it 'can set the client' do
-    client = described_class::Client.new(url: "http://app.com/flipper")
-    adapter = described_class.new(client: client)
+    client = described_class::Client.new
+    adapter = described_class.new(client: client, url: "http://app.com/flipper")
     expect(adapter.client).to be(client)
   end
 
