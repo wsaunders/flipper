@@ -29,7 +29,8 @@ module Flipper
       end
 
       def get(feature)
-        response = @client.get(url_for("/features/#{feature.key}"))
+        url = url_for("/features/#{feature.key}")
+        response = @client.get(url)
         if response.is_a?(Net::HTTPOK)
           parsed_response = JSON.parse(response.body)
           result_for_feature(feature, parsed_response.fetch('gates'))
@@ -41,14 +42,16 @@ module Flipper
       end
 
       def add(feature)
+        url = url_for("/features")
         body = JSON.generate(name: feature.key)
-        response = @client.post(url_for('/features'), body: body)
+        response = @client.post(url, body: body)
         response.is_a?(Net::HTTPOK)
       end
 
       def get_multi(features)
         csv_keys = features.map(&:key).join(',')
-        response = @client.get(url_for("/features?keys=#{csv_keys}"))
+        url = url_for("/features?keys=#{csv_keys}")
+        response = @client.get(url)
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -66,7 +69,8 @@ module Flipper
       end
 
       def get_all
-        response = @client.get(url_for("/features"))
+        url = url_for("/features")
+        response = @client.get(url)
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -85,7 +89,8 @@ module Flipper
       end
 
       def features
-        response = @client.get(url_for('/features'))
+        url = url_for("/features")
+        response = @client.get(url)
         raise Error, response unless response.is_a?(Net::HTTPOK)
 
         parsed_response = JSON.parse(response.body)
@@ -93,7 +98,8 @@ module Flipper
       end
 
       def remove(feature)
-        response = @client.delete(url_for("/features/#{feature.key}"))
+        url = url_for("/features/#{feature.key}")
+        response = @client.delete(url)
         response.is_a?(Net::HTTPNoContent)
       end
 
@@ -108,20 +114,20 @@ module Flipper
       def disable(feature, gate, thing)
         body = request_body_for_gate(gate, thing.value.to_s)
         query_string = gate.key == :groups ? "?allow_unregistered_groups=true" : ""
+        url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
         response =
           case gate.key
           when :percentage_of_actors, :percentage_of_time
-            url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
             @client.post(url, body: body)
           else
-            url = url_for("/features/#{feature.key}/#{gate.key}#{query_string}")
             @client.delete(url, body: body)
           end
         response.is_a?(Net::HTTPOK)
       end
 
       def clear(feature)
-        response = @client.delete(url_for("/features/#{feature.key}/clear"))
+        url = url_for("/features/#{feature.key}/clear")
+        response = @client.delete(url)
         response.is_a?(Net::HTTPNoContent)
       end
 
