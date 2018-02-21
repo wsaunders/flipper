@@ -32,6 +32,8 @@ module Flipper
       def shutdown
         @timer_thread.exit if @timer_thread
         event_queue << [:shutdown, nil]
+        # TODO: this might be tricky, how can we bound time on this exit?
+        # TODO: should this be in at_exit or something?
         @worker_thread.join if @worker_thread
 
         nil
@@ -61,12 +63,14 @@ module Flipper
               submit events
               events.clear
             else
+              # TODO: instrument instead of raise?
               raise "unknown operation: #{operation}"
             end
           end
         end
       end
 
+      # TODO: don't do a deliver if a deliver happened for some other reason recently
       def create_timer_thread
         Thread.new do
           loop do
@@ -85,7 +89,8 @@ module Flipper
           post_url = Flipper::Util.url_for(url, "/events")
 
           # TODO: Handle failures (not 201) by retrying for a period of time or
-          # maximum number of retries (with backoff).
+          # maximum number of retries (with backoff). Sleep and retry for with
+          # backoff or something. Edge case is set error state for shutdown.
           response = client.post(post_url, body: body)
           instrument_response_error(response) if response.code.to_i != 201
 
