@@ -131,6 +131,7 @@ module Flipper
                  end
 
       def client
+        # TODO: add thread id to headers along with pid/host
         client_options = {
           read_timeout: @read_timeout,
           open_timeout: @open_timeout,
