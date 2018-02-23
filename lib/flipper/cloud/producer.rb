@@ -29,11 +29,10 @@ module Flipper
         nil
       end
 
+      # TODO: Need to time bound shutdown and automatically shutdown in at_exit.
       def shutdown
         @timer_thread.exit if @timer_thread
         event_queue << [:shutdown, nil]
-        # TODO: this might be tricky, how can we bound time on this exit?
-        # TODO: should this be in at_exit or something?
         @worker_thread.join if @worker_thread
 
         nil
@@ -70,7 +69,8 @@ module Flipper
         end
       end
 
-      # TODO: don't do a deliver if a deliver happened for some other reason recently
+      # TODO: don't do a deliver if a deliver happened for some other
+      # reason recently
       def create_timer_thread
         Thread.new do
           loop do
