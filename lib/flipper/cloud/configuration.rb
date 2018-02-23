@@ -2,6 +2,8 @@ require 'socket'
 require 'thread'
 require 'flipper/adapters/http'
 require 'flipper/instrumenters/noop'
+require 'flipper/adapters/memory'
+require 'flipper/adapters/sync'
 require 'flipper/cloud/producer'
 
 module Flipper
@@ -65,11 +67,26 @@ module Flipper
       # quick processing. You do not need to care about this.
       attr_accessor :event_batch_size
 
+      # Public: Local adapter that all reads should go to in order to ensure
+      # latency is low and resiliency is high. This adapter is automatically
+      # kept in sync with cloud.
+      #
+      #  # for example, to use active record you could do:
+      #  configuration = Flipper::Cloud::Configuration.new
+      #  configuration.local_adapter = Flipper::Adapters::ActiveRecord.new
+      attr_accessor :local_adapter
+
+      # Public: Number of milliseconds between attempts to bring the local in
+      # sync with cloud (default: 10_000 aka 10 seconds).
+      attr_accessor :sync_interval
+
       def initialize(options = {})
         @token = options.fetch(:token)
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
         @read_timeout = options.fetch(:read_timeout, 5)
         @open_timeout = options.fetch(:open_timeout, 5)
+        @sync_interval = options.fetch(:sync_interval, 10_000)
+        @local_adapter = options.fetch(:local_adapter) { Adapters::Memory.new }
         @event_queue = options.fetch(:event_queue) { Queue.new }
         @event_producer = options.fetch(:event_producer) { Producer.new(self) }
         @event_capacity = options.fetch(:event_capacity, 10_000)
@@ -86,7 +103,7 @@ module Flipper
       end
 
       # Public: Read or customize the http adapter. Calling without a block will
-      # perform a read. Calling with a block yields the http_adapter
+      # perform a read. Calling with a block yields the cloud adapter
       # for customization.
       #
       #   # for example, to instrument the http calls, you can wrap the http
@@ -100,11 +117,11 @@ module Flipper
         if block_given?
           @adapter_block = block
         else
-          @adapter_block.call(http_adapter)
+          @adapter_block.call sync_adapter
         end
       end
 
-      # Public: Set url and uri for the http adapter.
+      # Public: Set url for the http adapter.
       attr_writer :url
 
       HOSTNAME = begin
@@ -135,6 +152,14 @@ module Flipper
       end
 
       private
+
+      def sync_adapter
+        sync_options = {
+          instrumenter: instrumenter,
+          interval: sync_interval,
+        }
+        Flipper::Adapters::Sync.new(local_adapter, http_adapter, sync_options)
+      end
 
       def http_adapter
         Flipper::Adapters::Http.new(url: @url, client: client)
