@@ -4,8 +4,6 @@ require "flipper/adapters/sync/interval_synchronizer"
 
 module Flipper
   module Adapters
-    # TODO: Syncing should happen in a background thread on a regular interval
-    # rather than in the main thread only when reads happen.
     class Sync
       include ::Flipper::Adapter
 
