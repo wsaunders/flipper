@@ -11,7 +11,7 @@ module Flipper
             extend Forwardable
 
             attr_reader :request,
-                        :pid, :hostname,
+                        :pid, :thread, :hostname,
                         :version, :platform, :platform_version,
                         :event_capacity, :event_flush_interval, :event_batch_size,
                         :client_timestamp, :timestamp,
@@ -23,20 +23,10 @@ module Flipper
             def initialize(request)
               @request = request
 
-              @pid = @request.env["HTTP_FLIPPER_PID"]
-              @hostname = @request.env["HTTP_FLIPPER_HOSTNAME"]
+              assign_client_details
+              assign_event_config_details
 
-              @version = @request.env["HTTP_FLIPPER_VERSION"]
-              @platform = @request.env["HTTP_FLIPPER_PLATFORM"]
-              @platform_version = @request.env["HTTP_FLIPPER_PLATFORM_VERSION"]
-
-              @event_capacity = @request.env["HTTP_FLIPPER_CONFIG_EVENT_CAPACITY"]
-              @event_flush_interval = @request.env["HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL"] # rubocop:disable Style/LineLength
-              @event_batch_size = @request.env["HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE"]
-
-              @client_timestamp = @request.env["HTTP_FLIPPER_TIMESTAMP"]
               @timestamp = Flipper::Util.timestamp
-
               @raw_events = data.fetch("events") { [] }
               @events = @raw_events.map { |hash| Flipper::Event.from_hash(hash) }
 
@@ -53,6 +43,24 @@ module Flipper
             end
 
             private
+
+            def assign_client_details
+              @pid = @request.env["HTTP_FLIPPER_PID"]
+              @thread = @request.env["HTTP_FLIPPER_THREAD"]
+              @hostname = @request.env["HTTP_FLIPPER_HOSTNAME"]
+
+              @version = @request.env["HTTP_FLIPPER_VERSION"]
+              @platform = @request.env["HTTP_FLIPPER_PLATFORM"]
+              @platform_version = @request.env["HTTP_FLIPPER_PLATFORM_VERSION"]
+
+              @client_timestamp = @request.env["HTTP_FLIPPER_TIMESTAMP"]
+            end
+
+            def assign_event_config_details
+              @event_capacity = @request.env["HTTP_FLIPPER_CONFIG_EVENT_CAPACITY"]
+              @event_flush_interval = @request.env["HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL"] # rubocop:disable Metrics/LineLength
+              @event_batch_size = @request.env["HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE"]
+            end
 
             def validate
               validate_client_information

@@ -16,6 +16,7 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
           "CONTENT_TYPE" => "application/json",
           "HTTP_USER_AGENT" => "Flipper",
           "HTTP_FLIPPER_PID" => "123",
+          "HTTP_FLIPPER_THREAD" => "70147860499320",
           "HTTP_FLIPPER_HOSTNAME" => "foobar.com",
           "HTTP_FLIPPER_VERSION" => Flipper::VERSION,
           "HTTP_FLIPPER_PLATFORM" => "ruby",
@@ -48,6 +49,7 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
         expect(batch).not_to be(nil)
         expect(batch.ip).to eq("127.0.0.1")
         expect(batch.pid).to eq("123")
+        expect(batch.thread).to eq("70147860499320")
         expect(batch.hostname).to eq("foobar.com")
         expect(batch.user_agent).to eq("Flipper")
         expect(batch.version).to eq(Flipper::VERSION)
