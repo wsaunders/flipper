@@ -150,21 +150,23 @@ module Flipper
       private
 
       def json_params
-        @json_params ||= if env[CONTENT_TYPE_KEY] == Api::CONTENT_TYPE
-                           body = env[REQUEST_BODY_KEY].read
-                           env[REQUEST_BODY_KEY].rewind
-                           if body.nil? || body.empty?
-                             {}
-                           else
-                             begin
-                               JSON.parse(body)
-                             rescue
-                               {}
-                             end
-                           end
-                         else
-                           {}
-                         end
+        @json_params ||= begin
+          if env[CONTENT_TYPE_KEY] == Api::CONTENT_TYPE
+            body = env[REQUEST_BODY_KEY].read
+            env[REQUEST_BODY_KEY].rewind
+            if body.nil? || body.empty?
+              {}
+            else
+              begin
+                JSON.parse(body)
+              rescue
+                {}
+              end
+            end
+          else
+            {}
+          end
+        end
       end
 
       # Private: Returns the request method converted to an action method.
