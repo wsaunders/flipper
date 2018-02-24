@@ -44,12 +44,12 @@ module Flipper
       # Public: The maximum number of events to buffer in memory. If the queue
       # size hits this number, events will be discarded rather than enqueued.
       # This setting exists to allow bounding the memory usage for
-      # buffered events.
+      # buffered events (default: 10_000).
       attr_accessor :event_capacity
 
       # Public: The number of seconds between event submissions. The thread
       # submitting events will sleep for event_flush_interval seconds before
-      # attempting to submit events again.
+      # attempting to submit events again (default: 10 seconds).
       attr_accessor :event_flush_interval
 
       # Internal: The producer used to buffer events as they happen and
@@ -60,11 +60,11 @@ module Flipper
       # library Queue instance by default. You do not need to care about this.
       attr_accessor :event_queue
 
-      # Internal: The maximum number of events to submit in one request.
-      # If there are 500 events to flush and event_batch_size is 100,
-      # 5 (500 / 100) HTTP requests will be issued instead of 1 (with all 500).
-      # This setting exists to limit the size of payloads submitted to ensure
-      # quick processing. You do not need to care about this.
+      # Internal: The maximum number of events to submit in one request
+      # (default: 1_000). If there are 500 events to flush and event_batch_size
+      # is 100, 5 (500 / 100) HTTP requests will be issued instead of 1
+      # (with all 500). This setting exists to limit the size of payloads
+      # submitted to ensure quick processing. You do not need to care about this.
       attr_accessor :event_batch_size
 
       # Public: Local adapter that all reads should go to in order to ensure
