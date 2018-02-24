@@ -74,7 +74,7 @@ RSpec.describe Flipper::Cloud::Producer do
     subject.shutdown
   end
 
-  it 'instruments producer submission response errors' do
+  it 'instruments producer response errors' do
     stub_request(:post, "https://www.featureflipper.com/adapter/events")
       .to_return(status: 500)
     subject.produce(event)
@@ -86,7 +86,7 @@ RSpec.describe Flipper::Cloud::Producer do
     expect(submission_event.payload[:response]).to be_instance_of(Net::HTTPInternalServerError)
   end
 
-  it 'instruments producer submission exceptions' do
+  it 'instruments producer exceptions' do
     exception = StandardError.new
     stub_request(:post, "https://www.featureflipper.com/adapter/events")
       .to_raise(exception)
