@@ -18,7 +18,7 @@ module Flipper
       # Public: The url for http adapter (default: Flipper::Cloud::DEFAULT_URL).
       #         Really should only be customized for development work. Feel free
       #         to forget you ever saw this.
-      attr_reader :url
+      attr_accessor :url
 
       # Public: net/http read timeout for all http requests (default: 5).
       attr_accessor :read_timeout
@@ -120,9 +120,6 @@ module Flipper
           @adapter_block.call sync_adapter
         end
       end
-
-      # Public: Set url for the http adapter.
-      attr_writer :url
 
       HOSTNAME = begin
                    Socket.gethostbyname(Socket.gethostname).first
