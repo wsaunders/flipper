@@ -80,7 +80,7 @@ RSpec.describe Flipper::Cloud::Producer do
     subject.produce(event)
     subject.shutdown
     submission_event = instrumenter.events.detect do |event|
-      event.name == "producer_submission_response_error.flipper"
+      event.name == "producer_response_error.flipper"
     end
     expect(submission_event).not_to be_nil
     expect(submission_event.payload[:response]).to be_instance_of(Net::HTTPInternalServerError)
@@ -93,7 +93,7 @@ RSpec.describe Flipper::Cloud::Producer do
     subject.produce(event)
     subject.shutdown
     submission_event = instrumenter.events.detect do |event|
-      event.name == "producer_submission_exception.flipper"
+      event.name == "producer_exception.flipper"
     end
     expect(submission_event).not_to be_nil
     expect(submission_event.payload[:exception]).to be(exception)

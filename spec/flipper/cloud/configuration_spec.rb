@@ -12,6 +12,17 @@ RSpec.describe Flipper::Cloud::Configuration do
     expect(instance.token).to eq(required_options[:token])
   end
 
+  it "defaults url" do
+    instance = described_class.new(required_options)
+    expect(instance.url).to eq("https://www.featureflipper.com/adapter")
+  end
+
+  it "can set url" do
+    options = required_options.merge(url: "http://localhost:5000/adapter")
+    instance = described_class.new(options)
+    expect(instance.url).to eq("http://localhost:5000/adapter")
+  end
+
   it "can set instrumenter" do
     instrumenter = Object.new
     instance = described_class.new(required_options.merge(instrumenter: instrumenter))
@@ -31,6 +42,11 @@ RSpec.describe Flipper::Cloud::Configuration do
   it "can set sync_interval" do
     instance = described_class.new(required_options.merge(sync_interval: 1_000))
     expect(instance.sync_interval).to eq(1_000)
+  end
+
+  it "can set shutdown_timeout" do
+    instance = described_class.new(required_options.merge(shutdown_timeout: 1))
+    expect(instance.shutdown_timeout).to eq(1)
   end
 
   it "passes sync_interval into sync adapter" do
@@ -63,15 +79,5 @@ RSpec.describe Flipper::Cloud::Configuration do
       Flipper::Adapters::Instrumented.new(adapter)
     end
     expect(instance.adapter).to be_instance_of(Flipper::Adapters::Instrumented)
-  end
-
-  it "can override url" do
-    options = required_options.merge(url: "http://localhost:5000/adapter")
-    instance = described_class.new(options)
-    expect(instance.url).to eq("http://localhost:5000/adapter")
-
-    instance = described_class.new(required_options)
-    instance.url = "http://localhost:5000/adapter"
-    expect(instance.url).to eq("http://localhost:5000/adapter")
   end
 end

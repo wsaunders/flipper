@@ -33,7 +33,14 @@ module Flipper
       def shutdown
         @timer_thread.exit if @timer_thread
         event_queue << [:shutdown, nil]
-        @worker_thread.join if @worker_thread
+
+        if @worker_thread
+          begin
+            @worker_thread.join shutdown_timeout
+          rescue => exception
+            instrument_exception exception
+          end
+        end
 
         nil
       end
@@ -101,17 +108,11 @@ module Flipper
       end
 
       def instrument_response_error(response)
-        payload = {
-          response: response,
-        }
-        instrumenter.instrument("producer_submission_response_error.flipper", payload)
+        instrumenter.instrument("producer_response_error.flipper", response: response)
       end
 
       def instrument_exception(exception)
-        payload = {
-          exception: exception,
-        }
-        instrumenter.instrument("producer_submission_exception.flipper", payload)
+        instrumenter.instrument("producer_exception.flipper", exception: exception)
       end
 
       def_delegators :@configuration,
@@ -121,6 +122,7 @@ module Flipper
                      :event_capacity,
                      :event_batch_size,
                      :event_flush_interval,
+                     :shutdown_timeout,
                      :instrumenter
     end
   end

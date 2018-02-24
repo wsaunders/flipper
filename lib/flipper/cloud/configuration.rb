@@ -56,6 +56,11 @@ module Flipper
       # eventually ship them to cloud.
       attr_accessor :event_producer
 
+      # Public: The number of seconds to wait when shutting down the producer
+      # before killing the thread and dropping any events not yet submitted to
+      # the cloud (default: 5 seconds).
+      attr_accessor :shutdown_timeout
+
       # Internal: The queue used to buffer events prior to submission. Standard
       # library Queue instance by default. You do not need to care about this.
       attr_accessor :event_queue
@@ -89,6 +94,7 @@ module Flipper
         @local_adapter = options.fetch(:local_adapter) { Adapters::Memory.new }
         @event_queue = options.fetch(:event_queue) { Queue.new }
         @event_producer = options.fetch(:event_producer) { Producer.new(self) }
+        @shutdown_timeout = options.fetch(:shutdown_timeout, 5)
         @event_capacity = options.fetch(:event_capacity, 10_000)
         @event_batch_size = options.fetch(:event_batch_size, 1_000)
         @event_flush_interval = options.fetch(:event_flush_interval, 10)
