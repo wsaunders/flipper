@@ -29,7 +29,6 @@ module Flipper
         nil
       end
 
-      # TODO: Need to time bound shutdown and automatically shutdown in at_exit.
       def shutdown
         @timer_thread.exit if @timer_thread
         event_queue << [:shutdown, nil]
