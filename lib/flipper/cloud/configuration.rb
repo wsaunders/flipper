@@ -143,7 +143,6 @@ module Flipper
             "FLIPPER_HOSTNAME" => HOSTNAME,
             "FLIPPER_PID" => Process.pid.to_s,
             "FLIPPER_THREAD" => Thread.current.object_id.to_s,
-            "FLIPPER_TIMESTAMP" => Flipper::Util.timestamp.to_s,
           },
         }
         Flipper::Adapters::Http::Client.new(client_options)

@@ -59,9 +59,12 @@ module Flipper
         end
 
         def build_request(http_method, uri, headers, options)
+          request_headers = {
+            "FLIPPER_TIMESTAMP" => Flipper::Util.timestamp.to_s,
+          }.merge(headers)
           body = options[:body]
           request = http_method.new(uri.request_uri)
-          request.initialize_http_header(headers) if headers
+          request.initialize_http_header(request_headers)
           request.body = body if body
 
           if @basic_auth_username && @basic_auth_password
