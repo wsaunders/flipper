@@ -85,6 +85,8 @@ module Flipper
       # sync with cloud (default: 10_000 aka 10 seconds).
       attr_accessor :sync_interval
 
+      attr_accessor :max_submission_attempts
+
       def initialize(options = {})
         @token = options.fetch(:token)
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
@@ -98,6 +100,7 @@ module Flipper
         @event_capacity = options.fetch(:event_capacity, 10_000)
         @event_batch_size = options.fetch(:event_batch_size, 1_000)
         @event_flush_interval = options.fetch(:event_flush_interval, 10)
+        @max_submission_attempts = options.fetch(:max_submission_attempts, 10)
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }
 

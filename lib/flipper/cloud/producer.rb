@@ -7,10 +7,14 @@ module Flipper
     class Producer
       extend Forwardable
 
+      # Private: Allow disabling sleep between retries for tests.
+      attr_accessor :sleep_enabled
+
       SHUTDOWN = Object.new
 
       def initialize(configuration)
         @configuration = configuration
+        @sleep_enabled = true
       end
 
       def produce(event)
@@ -93,17 +97,64 @@ module Flipper
         events.each_slice(event_batch_size) do |slice|
           body = JSON.generate(events: slice.map(&:as_json))
           post_url = Flipper::Util.url_for(url, "/events")
-
-          # TODO: Handle failures (not 201) by retrying for a period of time or
-          # maximum number of retries (with backoff). Sleep and retry for with
-          # backoff or something. Edge case is set error state for shutdown.
-          response = client.post(post_url, body: body)
-          instrument_response_error(response) if response.code.to_i != 201
-
-          nil
+          post post_url, body
         end
+
+        nil
       rescue => exception
         instrument_exception(exception)
+      end
+
+      class SubmissionError < StandardError
+        def self.status_retryable?(status)
+          (500..599).cover?(status)
+        end
+
+        attr_reader :status
+
+        def initialize(status)
+          @status = status
+          super("Submission resulted in #{status} http status")
+        end
+      end
+
+      def post(post_url, body)
+        attempts ||= 0
+
+        begin
+          attempts += 1
+          response = client.post(post_url, body: body)
+
+          http_status = response.code.to_i
+          return if http_status == 201
+
+          instrument_response_error(response)
+          if SubmissionError.status_retryable?(http_status)
+            raise SubmissionError, http_status
+          end
+
+          nil
+        rescue => exception
+          instrument_exception(exception)
+          return if attempts >= max_submission_attempts
+          sleep sleep_for_attempts(attempts) if sleep_enabled
+          retry
+        end
+      end
+
+      # Private: Given the number of attempts, it returns the number of seconds
+      # to sleep. Should always return a Float larger than base. Should always
+      # return a Float not larger than base + max.
+      #
+      # attempts - The number of attempts.
+      # base - The starting delay between retries.
+      # max_delay - The maximum to expand the delay between retries.
+      #
+      # Returns Float seconds to sleep.
+      def sleep_for_attempts(attempts, base: 0.5, max_delay: 2.0)
+        sleep_seconds = [base * (2**(attempts - 1)), max_delay].min
+        sleep_seconds *= (0.5 * (1 + rand))
+        [base, sleep_seconds].max
       end
 
       def instrument_response_error(response)
@@ -123,6 +174,7 @@ module Flipper
         :event_flush_interval,
         :shutdown_timeout,
         :instrumenter,
+        :max_submission_attempts,
       ].freeze
 
       def_delegators :@configuration, *CONFIGURATION_DELEGATED_METHODS

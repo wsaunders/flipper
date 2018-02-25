@@ -16,6 +16,7 @@ RSpec.describe Flipper::Cloud::Producer do
       event_capacity: 10,
       event_batch_size: 5,
       instrumenter: instrumenter,
+      max_submission_attempts: 5,
     }
     Flipper::Cloud::Configuration.new(attributes)
   end
@@ -37,6 +38,7 @@ RSpec.describe Flipper::Cloud::Producer do
 
   before do
     stub_request(:post, "https://www.featureflipper.com/adapter/events")
+    subject.sleep_enabled = false
   end
 
   it 'creates thread on produce and kills on shutdown' do
@@ -79,9 +81,8 @@ RSpec.describe Flipper::Cloud::Producer do
       .to_return(status: 500)
     subject.produce(event)
     subject.shutdown
-    submission_event = instrumenter.events.detect do |event|
-      event.name == "producer_response_error.flipper"
-    end
+
+    submission_event = instrumenter.event_by_name("producer_response_error.flipper")
     expect(submission_event).not_to be_nil
     expect(submission_event.payload[:response]).to be_instance_of(Net::HTTPInternalServerError)
   end
@@ -92,10 +93,32 @@ RSpec.describe Flipper::Cloud::Producer do
       .to_raise(exception)
     subject.produce(event)
     subject.shutdown
-    submission_event = instrumenter.events.detect do |event|
-      event.name == "producer_exception.flipper"
+
+    exception_event = instrumenter.event_by_name("producer_exception.flipper")
+    expect(exception_event.payload.fetch(:exception)).to be(exception)
+  end
+
+  it 'retries submission exceptions up to configured limit' do
+    exception = StandardError.new
+    stub_request(:post, "https://www.featureflipper.com/adapter/events")
+      .to_raise(exception)
+    subject.produce(event)
+    subject.shutdown
+
+    exception_events = instrumenter.events_by_name("producer_exception.flipper")
+    expect(exception_events.size).to be(5)
+  end
+
+  it 'retries 5xx response statuses up to configured limit' do
+    (500..599).each do |status|
+      instrumenter.reset
+      stub_request(:post, "https://www.featureflipper.com/adapter/events")
+        .to_return(status: status)
+      subject.produce(event)
+      subject.shutdown
+
+      exception_events = instrumenter.events_by_name("producer_response_error.flipper")
+      expect(exception_events.size).to be(5)
     end
-    expect(submission_event).not_to be_nil
-    expect(submission_event.payload[:exception]).to be(exception)
   end
 end
