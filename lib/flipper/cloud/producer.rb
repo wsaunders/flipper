@@ -114,15 +114,20 @@ module Flipper
         instrumenter.instrument("producer_exception.flipper", exception: exception)
       end
 
-      def_delegators :@configuration,
-                     :url,
-                     :client,
-                     :event_queue,
-                     :event_capacity,
-                     :event_batch_size,
-                     :event_flush_interval,
-                     :shutdown_timeout,
-                     :instrumenter
+      CONFIGURATION_DELEGATED_METHODS = [
+        :url,
+        :client,
+        :event_queue,
+        :event_capacity,
+        :event_batch_size,
+        :event_flush_interval,
+        :shutdown_timeout,
+        :instrumenter,
+      ].freeze
+
+      def_delegators :@configuration, *CONFIGURATION_DELEGATED_METHODS
+
+      private(*CONFIGURATION_DELEGATED_METHODS)
     end
   end
 end
