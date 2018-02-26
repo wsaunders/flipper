@@ -20,7 +20,6 @@ module Flipper
       def produce(event)
         ensure_threads_alive
 
-        # TODO: Stop enqueueing events if shutting down?
         # TODO: Log statistics about dropped events and send to cloud?
         event_queue << [:produce, event] if event_queue.size < event_capacity
 
