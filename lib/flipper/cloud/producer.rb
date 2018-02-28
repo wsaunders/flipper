@@ -143,13 +143,11 @@ module Flipper
       def post(post_url, body)
         with_retry do
           response = client.post(post_url, body: body)
-
           status = response.code.to_i
-          return if status == 201
 
-          instrument_response_error(response)
-          if SubmissionError.retry?(status)
-            raise SubmissionError, status
+          if status != 201
+            instrument_response_error(response)
+            raise SubmissionError, status if SubmissionError.retry?(status)
           end
         end
       end
