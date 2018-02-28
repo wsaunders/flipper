@@ -15,6 +15,8 @@ module Flipper
       def initialize(configuration)
         @configuration = configuration
         @sleep_enabled = true
+        @worker_mutex = Mutex.new
+        @timer_mutex = Mutex.new
       end
 
       def produce(event)
@@ -50,43 +52,63 @@ module Flipper
       private
 
       def ensure_threads_alive
-        @worker_thread = create_thread unless @worker_thread && @worker_thread.alive?
-        @timer_thread = create_timer_thread unless @timer_thread && @timer_thread.alive?
+        ensure_worker_running
+        ensure_timer_running
       end
 
-      def create_thread
-        Thread.new do
-          events = []
+      def ensure_worker_running
+        return if worker_running?
 
-          loop do
-            operation, item = event_queue.pop
+        @worker_mutex.synchronize do
+          return if worker_running?
 
-            case operation
-            when :shutdown
-              submit events
-              break
-            when :produce
-              events << item
-            when :deliver
-              submit events
-              events.clear
-            else
-              # TODO: instrument instead of raise?
-              raise "unknown operation: #{operation}"
+          @worker_thread = Thread.new do
+            events = []
+
+            loop do
+              operation, item = event_queue.pop
+
+              case operation
+              when :shutdown
+                submit events
+                break
+              when :produce
+                events << item
+              when :deliver
+                submit events
+                events.clear
+              else
+                # TODO: instrument instead of raise?
+                raise "unknown operation: #{operation}"
+              end
             end
           end
         end
       end
 
+      def worker_running?
+        @worker_thread && @worker_thread.alive?
+      end
+
       # TODO: don't do a deliver if a deliver happened for some other
       # reason recently
-      def create_timer_thread
-        Thread.new do
-          loop do
-            sleep event_flush_interval
-            deliver
+      def ensure_timer_running
+        return if timer_running?
+
+        @timer_mutex.synchronize do
+          return if timer_running?
+
+          @timer_thread = Thread.new do
+            loop do
+              sleep event_flush_interval
+              deliver
+            end
           end
         end
+      end
+
+      def timer_running?
+        @timer_thread && @timer_thread.alive?
       end
 
       def submit(events)
