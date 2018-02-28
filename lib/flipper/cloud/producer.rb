@@ -128,7 +128,7 @@ module Flipper
       end
 
       class SubmissionError < StandardError
-        def self.status_retryable?(status)
+        def self.retry?(status)
           (500..599).cover?(status)
         end
 
@@ -141,21 +141,25 @@ module Flipper
       end
 
       def post(post_url, body)
+        with_retry do
+          response = client.post(post_url, body: body)
+
+          status = response.code.to_i
+          return if status == 201
+
+          instrument_response_error(response)
+          if SubmissionError.retry?(status)
+            raise SubmissionError, status
+          end
+        end
+      end
+
+      def with_retry
         attempts ||= 0
 
         begin
           attempts += 1
-          response = client.post(post_url, body: body)
-
-          http_status = response.code.to_i
-          return if http_status == 201
-
-          instrument_response_error(response)
-          if SubmissionError.status_retryable?(http_status)
-            raise SubmissionError, http_status
-          end
-
-          nil
+          yield
         rescue => exception
           instrument_exception(exception)
           return if attempts >= max_submission_attempts
