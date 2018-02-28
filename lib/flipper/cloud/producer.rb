@@ -90,8 +90,6 @@ module Flipper
         @worker_thread && @worker_thread.alive?
       end
 
-      # TODO: don't do a deliver if a deliver happened for some other
-      # reason recently
       def ensure_timer_running
         return if timer_running?
 
@@ -101,6 +99,9 @@ module Flipper
           @timer_thread = Thread.new do
             loop do
               sleep event_flush_interval
+
+              # TODO: don't do a deliver if a deliver happened for some other
+              # reason recently
               deliver
             end
           end
