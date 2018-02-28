@@ -72,7 +72,6 @@ RSpec.describe Flipper::Cloud::Producer do
       .to_return(status: 201)
 
     5.times { subject.produce(event) }
-    subject.deliver
     subject.shutdown
   end
 
