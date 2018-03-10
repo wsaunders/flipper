@@ -29,6 +29,8 @@ module Flipper
       end
 
       def deliver
+        ensure_threads_alive
+
         event_queue << [:deliver, nil]
 
         nil
