@@ -71,6 +71,7 @@ module Flipper
               case operation
               when :shutdown
                 submit events
+                events.clear
                 break
               when :produce
                 events << item
