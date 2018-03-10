@@ -59,9 +59,11 @@ module Flipper
       end
 
       def ensure_worker_running
-        return if worker_running?
+        # If another thread is starting worker thread, then return early so this
+        # thread can enqueue and move on with life.
+        return unless @worker_mutex.try_lock
 
-        @worker_mutex.synchronize do
+        begin
           return if worker_running?
 
           @worker_thread = Thread.new do
@@ -85,6 +87,8 @@ module Flipper
               end
             end
           end
+        ensure
+          @worker_mutex.unlock
         end
       end
 
@@ -93,9 +97,11 @@ module Flipper
       end
 
       def ensure_timer_running
-        return if timer_running?
+        # If another thread is starting timer thread, then return early so this
+        # thread can enqueue and move on with life.
+        return unless @timer_mutex.try_lock
 
-        @timer_mutex.synchronize do
+        begin
           return if timer_running?
 
           @timer_thread = Thread.new do
@@ -107,6 +113,8 @@ module Flipper
               deliver
             end
           end
+        ensure
+          @timer_mutex.unlock
         end
       end
 
