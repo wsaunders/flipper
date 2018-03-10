@@ -85,6 +85,8 @@ module Flipper
       # sync with cloud (default: 10_000 aka 10 seconds).
       attr_accessor :sync_interval
 
+      # Public: The maximum number of retries when attempting to submit events
+      # to cloud.
       attr_accessor :max_submission_attempts
 
       def initialize(options = {})
