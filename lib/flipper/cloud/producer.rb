@@ -78,7 +78,6 @@ module Flipper
                 submit events
                 events.clear
               else
-                # TODO: instrument instead of raise?
                 raise "unknown operation: #{operation}"
               end
             end
