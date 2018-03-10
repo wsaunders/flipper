@@ -17,13 +17,17 @@ module Flipper
         @sleep_enabled = true
         @worker_mutex = Mutex.new
         @timer_mutex = Mutex.new
+        update_pid
       end
 
       def produce(event)
         ensure_threads_alive
 
-        # TODO: Log statistics about dropped events and send to cloud?
-        event_queue << [:produce, event] if event_queue.size < event_capacity
+        if event_queue.size < event_capacity
+          event_queue << [:produce, event]
+        else # rubocop:disable Style/EmptyElse
+          # TODO: Log statistics about dropped events and send to cloud?
+        end
 
         nil
       end
@@ -66,6 +70,7 @@ module Flipper
         begin
           return if worker_running?
 
+          update_pid
           @worker_thread = Thread.new do
             events = []
 
@@ -93,7 +98,7 @@ module Flipper
       end
 
       def worker_running?
-        @worker_thread && @worker_thread.alive?
+        @worker_thread && @pid == Process.pid && @worker_thread.alive?
       end
 
       def ensure_timer_running
@@ -104,6 +109,7 @@ module Flipper
         begin
           return if timer_running?
 
+          update_pid
           @timer_thread = Thread.new do
             loop do
               sleep event_flush_interval
@@ -119,7 +125,7 @@ module Flipper
       end
 
       def timer_running?
-        @timer_thread && @timer_thread.alive?
+        @timer_thread && @pid == Process.pid && @timer_thread.alive?
       end
 
       def submit(events)
@@ -197,6 +203,10 @@ module Flipper
 
       def instrument_exception(exception)
         instrumenter.instrument("producer_exception.flipper", exception: exception)
+      end
+
+      def update_pid
+        @pid = Process.pid
       end
 
       CONFIGURATION_DELEGATED_METHODS = [
