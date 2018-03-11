@@ -21,9 +21,6 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
           "HTTP_FLIPPER_VERSION" => Flipper::VERSION,
           "HTTP_FLIPPER_PLATFORM" => "ruby",
           "HTTP_FLIPPER_PLATFORM_VERSION" => "2.3.3",
-          "HTTP_FLIPPER_CONFIG_EVENT_CAPACITY" => "10000",
-          "HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL" => "10",
-          "HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE" => "1000",
           "HTTP_FLIPPER_TIMESTAMP" => client_timestamp.to_s,
         }
         dimensions = {
@@ -55,9 +52,6 @@ RSpec.describe Flipper::Api::V1::Actions::Events do
         expect(batch.version).to eq(Flipper::VERSION)
         expect(batch.platform).to eq("ruby")
         expect(batch.platform_version).to eq("2.3.3")
-        expect(batch.event_capacity).to eq("10000")
-        expect(batch.event_batch_size).to eq("1000")
-        expect(batch.event_flush_interval).to eq("10")
         expect(batch.client_timestamp).to eq(client_timestamp.to_s)
         expect(batch.timestamp >= now).to be(true)
         expect(batch.events.size).to be(1)

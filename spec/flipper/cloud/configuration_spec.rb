@@ -44,9 +44,19 @@ RSpec.describe Flipper::Cloud::Configuration do
     expect(instance.sync_interval).to eq(1_000)
   end
 
-  it "can set shutdown_timeout" do
-    instance = described_class.new(required_options.merge(shutdown_timeout: 1))
-    expect(instance.shutdown_timeout).to eq(1)
+  it "can set producer_options" do
+    producer_options = {
+      flush_interval: 60,
+    }
+    options = required_options.merge(producer_options: producer_options)
+    instance = described_class.new(options)
+    expect(instance.producer.flush_interval).to eq(60)
+  end
+
+  it "can set producer" do
+    producer = Object.new
+    instance = described_class.new(required_options.merge(producer: producer))
+    expect(instance.producer).to be(producer)
   end
 
   it "passes sync_interval into sync adapter" do

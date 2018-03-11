@@ -13,10 +13,14 @@ RSpec.describe Flipper::Cloud::Producer do
   let(:configuration) do
     attributes = {
       token: "asdf",
-      event_capacity: 10,
-      event_batch_size: 5,
+      producer_options: {
+        capacity: 10,
+        batch_size: 5,
+        max_retries: 5,
+        flush_interval: 0.1,
+        retry_sleep_enabled: false,
+      },
       instrumenter: instrumenter,
-      max_submission_attempts: 5,
     }
     Flipper::Cloud::Configuration.new(attributes)
   end
@@ -34,16 +38,13 @@ RSpec.describe Flipper::Cloud::Producer do
     Flipper::Event.new(attributes)
   end
 
-  subject { configuration.event_producer }
+  subject { configuration.producer }
 
   before do
     stub_request(:post, "https://www.featureflipper.com/adapter/events")
-    subject.sleep_enabled = false
   end
 
   it 'creates thread on produce and kills on shutdown' do
-    configuration.event_flush_interval = 0.1
-
     expect(subject.instance_variable_get("@worker_thread")).to be_nil
     expect(subject.instance_variable_get("@timer_thread")).to be_nil
 
@@ -54,7 +55,7 @@ RSpec.describe Flipper::Cloud::Producer do
 
     subject.shutdown
 
-    sleep configuration.event_flush_interval * 2
+    sleep subject.flush_interval * 2
 
     expect(subject.instance_variable_get("@worker_thread")).not_to be_alive
     expect(subject.instance_variable_get("@timer_thread")).not_to be_alive

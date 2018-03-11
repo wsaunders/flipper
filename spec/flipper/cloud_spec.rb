@@ -163,11 +163,11 @@ RSpec.describe Flipper::Cloud do
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
-      configuration.event_producer.shutdown
+      configuration.producer.shutdown
 
       expect(errors).to eq([])
       expect(@event_receiver.size).to be(1)
-      expect(configuration.event_queue.size).to be(0)
+      expect(configuration.producer.queue.size).to be(0)
     end
   end
 end

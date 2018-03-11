@@ -29,8 +29,7 @@ module Flipper
         attributes[:dimensions]["flipper_id"] = thing.value if thing
 
         event = Flipper::Event.new(attributes)
-        producer = configuration.event_producer
-        producer.produce event
+        configuration.producer.produce event
       end
 
       Flipper.new(configuration.adapter, instrumenter: configuration.instrumenter)

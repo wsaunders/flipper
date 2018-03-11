@@ -1,6 +1,7 @@
 require "json"
 require "thread"
 require "forwardable"
+require "flipper/instrumenters/noop"
 
 module Flipper
   module Cloud
@@ -8,13 +9,34 @@ module Flipper
       extend Forwardable
 
       # Private: Allow disabling sleep between retries for tests.
-      attr_accessor :sleep_enabled
+      attr_accessor :retry_sleep_enabled
 
       SHUTDOWN = Object.new
 
-      def initialize(configuration)
+      attr_reader :queue
+      attr_reader :capacity
+      attr_reader :batch_size
+      attr_reader :max_retries
+      attr_reader :flush_interval
+      attr_reader :shutdown_timeout
+      attr_reader :retry_sleep_enabled
+      attr_reader :instrumenter
+
+      def initialize(configuration, options = {})
+        @queue = options.fetch(:queue) { Queue.new }
+        @capacity = options.fetch(:capacity, 10_000)
+        @batch_size = options.fetch(:batch_size, 1_000)
+        @max_retries = options.fetch(:max_retries, 10)
+        @flush_interval = options.fetch(:flush_interval, 10)
+        @shutdown_timeout = options.fetch(:shutdown_timeout, 5)
+        @retry_sleep_enabled = options.fetch(:retry_sleep_enabled, true)
+        @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
+
+        if @flush_interval <= 0
+          raise ArgumentError, "flush_interval must be greater than zero"
+        end
+
         @configuration = configuration
-        @sleep_enabled = true
         @worker_mutex = Mutex.new
         @timer_mutex = Mutex.new
         update_pid
@@ -23,8 +45,8 @@ module Flipper
       def produce(event)
         ensure_threads_alive
 
-        if event_queue.size < event_capacity
-          event_queue << [:produce, event]
+        if @queue.size < @capacity
+          @queue << [:produce, event]
         else # rubocop:disable Style/EmptyElse
           # TODO: Log statistics about dropped events and send to cloud?
         end
@@ -35,18 +57,18 @@ module Flipper
       def deliver
         ensure_threads_alive
 
-        event_queue << [:deliver, nil]
+        @queue << [:deliver, nil]
 
         nil
       end
 
       def shutdown
         @timer_thread.exit if @timer_thread
-        event_queue << [:shutdown, nil]
+        @queue << [:shutdown, nil]
 
         if @worker_thread
           begin
-            @worker_thread.join shutdown_timeout
+            @worker_thread.join @shutdown_timeout
           rescue => exception
             instrument_exception exception
           end
@@ -75,7 +97,7 @@ module Flipper
             events = []
 
             loop do
-              operation, item = event_queue.pop
+              operation, item = @queue.pop
 
               case operation
               when :shutdown
@@ -112,7 +134,7 @@ module Flipper
           update_pid
           @timer_thread = Thread.new do
             loop do
-              sleep event_flush_interval
+              sleep @flush_interval
 
               # TODO: don't do a deliver if a deliver happened for some other
               # reason recently
@@ -132,7 +154,7 @@ module Flipper
         events.compact!
         return if events.empty?
 
-        events.each_slice(event_batch_size) do |slice|
+        events.each_slice(@batch_size) do |slice|
           body = JSON.generate(events: slice.map(&:as_json))
           post_url = Flipper::Util.url_for(url, "/events")
           post post_url, body
@@ -176,8 +198,8 @@ module Flipper
           yield
         rescue => exception
           instrument_exception(exception)
-          return if attempts >= max_submission_attempts
-          sleep sleep_for_attempts(attempts) if sleep_enabled
+          return if attempts >= @max_retries
+          sleep sleep_for_attempts(attempts) if @retry_sleep_enabled
           retry
         end
       end
@@ -198,11 +220,11 @@ module Flipper
       end
 
       def instrument_response_error(response)
-        instrumenter.instrument("producer_response_error.flipper", response: response)
+        @instrumenter.instrument("producer_response_error.flipper", response: response)
       end
 
       def instrument_exception(exception)
-        instrumenter.instrument("producer_exception.flipper", exception: exception)
+        @instrumenter.instrument("producer_exception.flipper", exception: exception)
       end
 
       def update_pid
@@ -212,13 +234,6 @@ module Flipper
       CONFIGURATION_DELEGATED_METHODS = [
         :url,
         :client,
-        :event_queue,
-        :event_capacity,
-        :event_batch_size,
-        :event_flush_interval,
-        :shutdown_timeout,
-        :instrumenter,
-        :max_submission_attempts,
       ].freeze
 
       def_delegators :@configuration, *CONFIGURATION_DELEGATED_METHODS

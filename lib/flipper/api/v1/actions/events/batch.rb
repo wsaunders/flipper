@@ -13,7 +13,6 @@ module Flipper
             attr_reader :request,
                         :pid, :thread, :hostname,
                         :version, :platform, :platform_version,
-                        :event_capacity, :event_flush_interval, :event_batch_size,
                         :client_timestamp, :timestamp,
                         :events,
                         :errors
@@ -24,7 +23,6 @@ module Flipper
               @request = request
 
               assign_client_details
-              assign_event_config_details
 
               @timestamp = Flipper::Util.timestamp
               @raw_events = data.fetch("events") { [] }
@@ -56,16 +54,9 @@ module Flipper
               @client_timestamp = @request.env["HTTP_FLIPPER_TIMESTAMP"]
             end
 
-            def assign_event_config_details
-              @event_capacity = @request.env["HTTP_FLIPPER_CONFIG_EVENT_CAPACITY"]
-              @event_flush_interval = @request.env["HTTP_FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL"] # rubocop:disable Metrics/LineLength
-              @event_batch_size = @request.env["HTTP_FLIPPER_CONFIG_EVENT_BATCH_SIZE"]
-            end
-
             def validate
               validate_client_information
               validate_platform
-              validate_config
               validate_events
             end
 
@@ -94,20 +85,6 @@ module Flipper
 
               if @platform_version.nil?
                 @errors << ["Flipper-Platform Version is required"]
-              end
-            end
-
-            def validate_config
-              if @event_capacity.nil?
-                @errors << ["Flipper-Config-Event-Capacity-Config header is required"]
-              end
-
-              if @event_flush_interval.nil?
-                @errors << ["Flipper-Config-Event-Flush-Interval header is required"]
-              end
-
-              if @event_batch_size.nil?
-                @errors << ["Flipper-Config-Event-Batch-Size header is required"]
               end
             end
 

@@ -41,36 +41,16 @@ module Flipper
       #  configuration.instrumenter = ActiveSupport::Notifications
       attr_accessor :instrumenter
 
-      # Public: The maximum number of events to buffer in memory. If the queue
-      # size hits this number, events will be discarded rather than enqueued.
-      # This setting exists to allow bounding the memory usage for
-      # buffered events (default: 10_000).
-      attr_accessor :event_capacity
-
-      # Public: The number of seconds between event submissions. The thread
-      # submitting events will sleep for event_flush_interval seconds before
-      # attempting to submit events again (default: 10 seconds).
-      attr_accessor :event_flush_interval
-
       # Internal: The producer used to buffer events as they happen and
-      # eventually ship them to cloud.
-      attr_accessor :event_producer
+      # eventually ship them to cloud. If provided, producer_options are
+      # disregarded as it is assumed that you configured your producer's options
+      # with exactly what you want.
+      attr_accessor :producer
 
-      # Public: The number of seconds to wait when shutting down the producer
-      # before killing the thread and dropping any events not yet submitted to
-      # the cloud (default: 5 seconds).
-      attr_accessor :shutdown_timeout
-
-      # Internal: The queue used to buffer events prior to submission. Standard
-      # library Queue instance by default. You do not need to care about this.
-      attr_accessor :event_queue
-
-      # Internal: The maximum number of events to submit in one request
-      # (default: 1_000). If there are 500 events to flush and event_batch_size
-      # is 100, 5 (500 / 100) HTTP requests will be issued instead of 1
-      # (with all 500). This setting exists to limit the size of payloads
-      # submitted to ensure quick processing. You do not need to care about this.
-      attr_accessor :event_batch_size
+      # Public: The options passed to the default producer instance if no
+      # producer is provided. See Producer#initialize for more. If producer is
+      # provided, these options are disregarded.
+      attr_accessor :producer_options
 
       # Public: Local adapter that all reads should go to in order to ensure
       # latency is low and resiliency is high. This adapter is automatically
@@ -85,10 +65,6 @@ module Flipper
       # sync with cloud (default: 10_000 aka 10 seconds).
       attr_accessor :sync_interval
 
-      # Public: The maximum number of retries when attempting to submit events
-      # to cloud.
-      attr_accessor :max_submission_attempts
-
       def initialize(options = {})
         @token = options.fetch(:token)
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
@@ -96,19 +72,16 @@ module Flipper
         @open_timeout = options.fetch(:open_timeout, 5)
         @sync_interval = options.fetch(:sync_interval, 10_000)
         @local_adapter = options.fetch(:local_adapter) { Adapters::Memory.new }
-        @event_queue = options.fetch(:event_queue) { Queue.new }
-        @event_producer = options.fetch(:event_producer) { Producer.new(self) }
-        @shutdown_timeout = options.fetch(:shutdown_timeout, 5)
-        @event_capacity = options.fetch(:event_capacity, 10_000)
-        @event_batch_size = options.fetch(:event_batch_size, 1_000)
-        @event_flush_interval = options.fetch(:event_flush_interval, 10)
-        @max_submission_attempts = options.fetch(:max_submission_attempts, 10)
+        @producer = options.fetch(:producer) do
+          default_producer_options = {
+            instrumenter: @instrumenter,
+          }
+          provided_producer_options = options.fetch(:producer_options) { {} }
+          producer_options = default_producer_options.merge(provided_producer_options)
+          Producer.new(self, producer_options)
+        end
         @debug_output = options[:debug_output]
         @adapter_block = ->(adapter) { adapter }
-
-        if @event_flush_interval <= 0
-          raise ArgumentError, "event_flush_interval must be greater than zero"
-        end
 
         self.url = options.fetch(:url, DEFAULT_URL)
       end
@@ -145,9 +118,6 @@ module Flipper
           debug_output: @debug_output,
           headers: {
             "FEATURE_FLIPPER_TOKEN" => @token,
-            "FLIPPER_CONFIG_EVENT_CAPACITY" => event_capacity.to_s,
-            "FLIPPER_CONFIG_EVENT_BATCH_SIZE" => event_batch_size.to_s,
-            "FLIPPER_CONFIG_EVENT_FLUSH_INTERVAL" => event_flush_interval.to_s,
             "FLIPPER_VERSION" => Flipper::VERSION,
             "FLIPPER_PLATFORM" => "ruby",
             "FLIPPER_PLATFORM_VERSION" => RUBY_VERSION,
