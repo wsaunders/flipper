@@ -211,7 +211,6 @@ module Flipper
       end
 
       CONFIGURATION_DELEGATED_METHODS = [
-        :url,
         :client,
       ].freeze
 
