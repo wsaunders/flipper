@@ -14,7 +14,16 @@ module Flipper
 
         HTTPS_SCHEME = "https".freeze
 
+        attr_reader :url
+        attr_reader :headers
+        attr_reader :basic_auth_username
+        attr_reader :basic_auth_password
+        attr_reader :read_timeout
+        attr_reader :open_timeout
+        attr_reader :debug_output
+
         def initialize(options = {})
+          @url = options.fetch(:url)
           @headers = DEFAULT_HEADERS.merge(options[:headers] || {})
           @basic_auth_username = options[:basic_auth_username]
           @basic_auth_password = options[:basic_auth_password]
@@ -23,21 +32,22 @@ module Flipper
           @debug_output = options[:debug_output]
         end
 
-        def get(url, headers: {})
-          perform Net::HTTP::Get, url, @headers.merge(headers)
+        def get(path, headers: {})
+          perform Net::HTTP::Get, path, @headers.merge(headers)
         end
 
-        def post(url, body: nil, headers: {})
-          perform Net::HTTP::Post, url, @headers.merge(headers), body: body
+        def post(path, body: nil, headers: {})
+          perform Net::HTTP::Post, path, @headers.merge(headers), body: body
         end
 
-        def delete(url, body: nil, headers: {})
-          perform Net::HTTP::Delete, url, @headers.merge(headers), body: body
+        def delete(path, body: nil, headers: {})
+          perform Net::HTTP::Delete, path, @headers.merge(headers), body: body
         end
 
         private
 
-        def perform(http_method, url, headers = {}, options = {})
+        def perform(http_method, path, headers = {}, options = {})
+          url = Flipper::Util.url_for(@url, path)
           uri = URI(url)
           http = build_http(uri)
           request = build_request(http_method, uri, headers, options)

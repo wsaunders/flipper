@@ -156,8 +156,7 @@ module Flipper
 
         events.each_slice(@batch_size) do |slice|
           body = JSON.generate(events: slice.map(&:as_json))
-          post_url = Flipper::Util.url_for(url, "/events")
-          post post_url, body
+          post body
         end
 
         nil
@@ -178,9 +177,9 @@ module Flipper
         end
       end
 
-      def post(post_url, body)
+      def post(body)
         with_retry do
-          response = client.post(post_url, body: body)
+          response = client.post("/events", body: body)
           status = response.code.to_i
 
           if status != 201

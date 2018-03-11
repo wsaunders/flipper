@@ -32,7 +32,7 @@ RSpec.describe Flipper::Cloud do
     end
 
     it 'sets up correct url' do
-      uri = URI(@http_adapter.url)
+      uri = URI(@http_adapter.client.url)
       expect(uri.scheme).to eq('https')
       expect(uri.host).to eq('www.featureflipper.com')
       expect(uri.path).to eq('/adapter')
@@ -60,7 +60,7 @@ RSpec.describe Flipper::Cloud do
     end
 
     it 'sets correct url' do
-      uri = URI(@http_adapter.url)
+      uri = URI(@http_adapter.client.url)
       expect(uri.scheme).to eq('https')
       expect(uri.host).to eq('www.fakeflipper.com')
       expect(uri.path).to eq('/sadpanda')
