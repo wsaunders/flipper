@@ -10,21 +10,6 @@ RSpec.describe Flipper::Cloud::Producer do
     Flipper::Instrumenters::Memory.new
   end
 
-  let(:configuration) do
-    attributes = {
-      token: "asdf",
-      producer_options: {
-        capacity: 10,
-        batch_size: 5,
-        flush_interval: 0.1,
-        retry_limit: 5,
-        retry_sleep_enabled: false,
-      },
-      instrumenter: instrumenter,
-    }
-    Flipper::Cloud::Configuration.new(attributes)
-  end
-
   let(:event) do
     attributes = {
       type: "enabled",
@@ -38,7 +23,26 @@ RSpec.describe Flipper::Cloud::Producer do
     Flipper::Event.new(attributes)
   end
 
-  subject { configuration.producer }
+  let(:client) do
+    client_options = {
+      token: "asdf",
+      url: "https://www.featureflipper.com/adapter",
+    }
+    Flipper::Adapters::Http::Client.new(client_options)
+  end
+
+  subject do
+    producer_options = {
+      client: client,
+      capacity: 10,
+      batch_size: 5,
+      flush_interval: 0.1,
+      retry_limit: 5,
+      retry_sleep_enabled: false,
+      instrumenter: instrumenter,
+    }
+    described_class.new(producer_options)
+  end
 
   before do
     stub_request(:post, "https://www.featureflipper.com/adapter/events")

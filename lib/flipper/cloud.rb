@@ -1,5 +1,5 @@
 require "flipper/cloud/configuration"
-require "flipper/event"
+require "flipper/cloud/client"
 
 module Flipper
   module Cloud
@@ -13,26 +13,8 @@ module Flipper
     def self.new(token, options = {})
       configuration = Configuration.new(options.merge(token: token))
       yield configuration if block_given?
-
-      configuration.instrumenter.subscribe(Flipper::Feature::InstrumentationName) do |*args|
-        _name, _start, _finish, _id, payload = args
-        attributes = {
-          type: "enabled",
-          dimensions: {
-            "feature" => payload[:feature_name].to_s,
-            "result" => payload[:result].to_s,
-          },
-          timestamp: Flipper::Util.timestamp,
-        }
-
-        thing = payload[:thing]
-        attributes[:dimensions]["flipper_id"] = thing.value if thing
-
-        event = Flipper::Event.new(attributes)
-        configuration.producer.produce event
-      end
-
-      Flipper.new(configuration.adapter, instrumenter: configuration.instrumenter)
+      configuration.freeze
+      Client.new(configuration: configuration)
     end
   end
 end

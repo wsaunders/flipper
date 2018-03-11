@@ -23,8 +23,8 @@ RSpec.describe Flipper::Cloud do
       @http_client = @http_adapter.instance_variable_get('@client')
     end
 
-    it 'returns Flipper::DSL instance' do
-      expect(@instance).to be_instance_of(Flipper::DSL)
+    it 'returns cloud client' do
+      expect(@instance).to be_instance_of(Flipper::Cloud::Client)
     end
 
     it 'configures instance to use http adapter' do
@@ -163,11 +163,11 @@ RSpec.describe Flipper::Cloud do
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
       subject.enabled?(:foo, actors.sample)
-      configuration.producer.shutdown
+      subject.producer.shutdown
 
       expect(errors).to eq([])
       expect(@event_receiver.size).to be(1)
-      expect(configuration.producer.queue.size).to be(0)
+      expect(subject.producer.queue.size).to be(0)
     end
   end
 end

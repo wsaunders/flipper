@@ -50,13 +50,7 @@ RSpec.describe Flipper::Cloud::Configuration do
     }
     options = required_options.merge(producer_options: producer_options)
     instance = described_class.new(options)
-    expect(instance.producer.flush_interval).to eq(60)
-  end
-
-  it "can set producer" do
-    producer = Object.new
-    instance = described_class.new(required_options.merge(producer: producer))
-    expect(instance.producer).to be(producer)
+    expect(instance.producer_options[:flush_interval]).to eq(60)
   end
 
   it "passes sync_interval into sync adapter" do

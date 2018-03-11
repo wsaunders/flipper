@@ -13,16 +13,18 @@ module Flipper
 
       SHUTDOWN = Object.new
 
+      attr_reader :client
       attr_reader :queue
       attr_reader :capacity
       attr_reader :batch_size
-      attr_reader :retry_limit
       attr_reader :flush_interval
       attr_reader :shutdown_timeout
+      attr_reader :retry_limit
       attr_reader :retry_sleep_enabled
       attr_reader :instrumenter
 
-      def initialize(configuration, options = {})
+      def initialize(options = {})
+        @client = options.fetch(:client)
         @queue = options.fetch(:queue) { Queue.new }
         @capacity = options.fetch(:capacity, 10_000)
         @batch_size = options.fetch(:batch_size, 1_000)
@@ -36,7 +38,6 @@ module Flipper
           raise ArgumentError, "flush_interval must be greater than zero"
         end
 
-        @configuration = configuration
         @worker_mutex = Mutex.new
         @timer_mutex = Mutex.new
         update_pid
@@ -188,7 +189,7 @@ module Flipper
           on_error: on_error,
         }
         Util.with_retry(retry_options) do
-          response = client.post("/events", body: body)
+          response = @client.post("/events", body: body)
           status = response.code.to_i
 
           if status != 201
@@ -209,14 +210,6 @@ module Flipper
       def update_pid
         @pid = Process.pid
       end
-
-      CONFIGURATION_DELEGATED_METHODS = [
-        :client,
-      ].freeze
-
-      def_delegators :@configuration, *CONFIGURATION_DELEGATED_METHODS
-
-      private(*CONFIGURATION_DELEGATED_METHODS)
     end
   end
 end

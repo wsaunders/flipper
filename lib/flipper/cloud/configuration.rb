@@ -4,7 +4,6 @@ require 'flipper/adapters/http'
 require 'flipper/instrumenters/noop'
 require 'flipper/adapters/memory'
 require 'flipper/adapters/sync'
-require 'flipper/cloud/producer'
 
 module Flipper
   module Cloud
@@ -41,12 +40,6 @@ module Flipper
       #  configuration.instrumenter = ActiveSupport::Notifications
       attr_accessor :instrumenter
 
-      # Internal: The producer used to buffer events as they happen and
-      # eventually ship them to cloud. If provided, producer_options are
-      # disregarded as it is assumed that you configured your producer's options
-      # with exactly what you want.
-      attr_accessor :producer
-
       # Public: The options passed to the default producer instance if no
       # producer is provided. See Producer#initialize for more. If producer is
       # provided, these options are disregarded.
@@ -79,16 +72,7 @@ module Flipper
         @local_adapter = options.fetch(:local_adapter) { Adapters::Memory.new }
         @adapter_block = ->(adapter) { adapter }
 
-        # Producer and options.
-        @producer = options.fetch(:producer) do
-          default_producer_options = {
-            instrumenter: @instrumenter,
-          }
-          provided_producer_options = options.fetch(:producer_options) { {} }
-          producer_options = default_producer_options.merge(provided_producer_options)
-          Producer.new(self, producer_options)
-        end
-
+        @producer_options = options.fetch(:producer_options) { {} }
       end
 
       # Public: Read or customize the http adapter. Calling without a block will
