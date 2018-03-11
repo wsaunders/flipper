@@ -66,12 +66,20 @@ module Flipper
       attr_accessor :sync_interval
 
       def initialize(options = {})
+        # Http adapter options.
         @token = options.fetch(:token)
-        @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
+        @url = options.fetch(:url, DEFAULT_URL)
         @read_timeout = options.fetch(:read_timeout, 5)
         @open_timeout = options.fetch(:open_timeout, 5)
+        @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
+        @debug_output = options[:debug_output]
+
+        # Sync adapter and wrapping.
         @sync_interval = options.fetch(:sync_interval, 10_000)
         @local_adapter = options.fetch(:local_adapter) { Adapters::Memory.new }
+        @adapter_block = ->(adapter) { adapter }
+
+        # Producer and options.
         @producer = options.fetch(:producer) do
           default_producer_options = {
             instrumenter: @instrumenter,
@@ -80,10 +88,7 @@ module Flipper
           producer_options = default_producer_options.merge(provided_producer_options)
           Producer.new(self, producer_options)
         end
-        @debug_output = options[:debug_output]
-        @adapter_block = ->(adapter) { adapter }
 
-        self.url = options.fetch(:url, DEFAULT_URL)
       end
 
       # Public: Read or customize the http adapter. Calling without a block will
