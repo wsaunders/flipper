@@ -16,8 +16,8 @@ RSpec.describe Flipper::Cloud::Producer do
       producer_options: {
         capacity: 10,
         batch_size: 5,
-        max_retries: 5,
         flush_interval: 0.1,
+        retry_limit: 5,
         retry_sleep_enabled: false,
       },
       instrumenter: instrumenter,

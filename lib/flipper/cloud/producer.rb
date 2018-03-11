@@ -16,7 +16,7 @@ module Flipper
       attr_reader :queue
       attr_reader :capacity
       attr_reader :batch_size
-      attr_reader :max_retries
+      attr_reader :retry_limit
       attr_reader :flush_interval
       attr_reader :shutdown_timeout
       attr_reader :retry_sleep_enabled
@@ -26,9 +26,9 @@ module Flipper
         @queue = options.fetch(:queue) { Queue.new }
         @capacity = options.fetch(:capacity, 10_000)
         @batch_size = options.fetch(:batch_size, 1_000)
-        @max_retries = options.fetch(:max_retries, 10)
         @flush_interval = options.fetch(:flush_interval, 10)
         @shutdown_timeout = options.fetch(:shutdown_timeout, 5)
+        @retry_limit = options.fetch(:retry_limit, 10)
         @retry_sleep_enabled = options.fetch(:retry_sleep_enabled, true)
         @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
 
@@ -178,7 +178,16 @@ module Flipper
       end
 
       def post(body)
-        with_retry do
+        on_error = lambda do |exception, attempts|
+          instrument_exception(exception)
+        end
+
+        retry_options = {
+          limit: @retry_limit,
+          sleep_enabled: @retry_sleep_enabled,
+          on_error: on_error,
+        }
+        Util.with_retry(retry_options) do
           response = client.post("/events", body: body)
           status = response.code.to_i
 
@@ -187,35 +196,6 @@ module Flipper
             raise SubmissionError, status if SubmissionError.retry?(status)
           end
         end
-      end
-
-      def with_retry
-        attempts ||= 0
-
-        begin
-          attempts += 1
-          yield
-        rescue => exception
-          instrument_exception(exception)
-          return if attempts >= @max_retries
-          sleep sleep_for_attempts(attempts) if @retry_sleep_enabled
-          retry
-        end
-      end
-
-      # Private: Given the number of attempts, it returns the number of seconds
-      # to sleep. Should always return a Float larger than base. Should always
-      # return a Float not larger than base + max.
-      #
-      # attempts - The number of attempts.
-      # base - The starting delay between retries.
-      # max_delay - The maximum to expand the delay between retries.
-      #
-      # Returns Float seconds to sleep.
-      def sleep_for_attempts(attempts, base: 0.5, max_delay: 2.0)
-        sleep_seconds = [base * (2**(attempts - 1)), max_delay].min
-        sleep_seconds *= (0.5 * (1 + rand))
-        [base, sleep_seconds].max
       end
 
       def instrument_response_error(response)
